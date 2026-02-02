@@ -1,6 +1,6 @@
 /**
  * 📘 PORTAL DE EVALUACIÓN DE DESEMPEÑO G4S - BACKEND PRO
- * Versión: 7.4 (Ajuste Carpeta PDF + Campo Compañía + Validación Email)
+ * Versión: 8.0 (Dashboard Gráfico + Reportes Funcionales)
  */
 
 const CONFIG = {
@@ -9,7 +9,6 @@ const CONFIG = {
     EMPLEADOS: '1zFayNigYrkODNRhKq4IoErLELB98xyj_8ZvGADEp3s4',
     EVALUACIONES: '1WuIyPUYGzKTlmSQ8oGUTdOu4Tm-JrpUNDYksJzHjweA',
     PLANTILLA_DOC: '1gvD5arbSG66iUMimEnvvYNI3tjzm7Al18VUJw_fA5Rk',
-    // ✅ NUEVO ID DE CARPETA ACTUALIZADO
     CARPETA_PDF: '16U-cJ4f5tjk3WkgxOVx9FjkNTa6se-lT', 
     FORM_ID: '1JiZqopdMJr6wwMF3PjGTCBWhtTymEKUOqGtSNQgNiz4' 
   },
@@ -50,7 +49,7 @@ function getInitData() {
       r[idxEstado] === 'Activo'
     );
 
-    if (!usuario) return { error: true, message: 'ACCESO DENEGADO: Usuario no activo.' };
+    if (!usuario) return { error: true, message: 'ACCESO DENEGADO: Su usuario no tiene permisos activos.' };
 
     const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol] : 'Usuario';
     const isAdmin = ['Administrador', 'Admin', 'UsuarioAdministrador'].includes(userRole);
@@ -83,7 +82,7 @@ function buscarEmpleado(cedula) {
       sucursal: headers.indexOf('Sucursal'),     
       fecha: headers.indexOf('FechaIngreso'),    
       email: headers.indexOf('eMail'),
-      compania: headers.indexOf('Compania'), // Columna Compañía
+      compania: headers.indexOf('Compania'),
       estado: headers.indexOf('Estado')
     };
     const cedulaStr = cedula.toString().trim();
@@ -100,7 +99,6 @@ function buscarEmpleado(cedula) {
         sucursal: empleado[map.sucursal],
         fechaIngreso: formatFecha(empleado[map.fecha]),
         email: empleado[map.email] || '',
-        // ✅ Capturamos la compañía, o ponemos G4S por defecto si está vacía
         compania: (map.compania > -1 && empleado[map.compania]) ? empleado[map.compania] : 'G4S Secure Solutions',
         estado: map.estado > -1 ? empleado[map.estado] : 'Activo'
       }
@@ -132,15 +130,13 @@ function procesarFormulario(e) {
     if (match) { const num = match[1]; if (num >= 1 && num <= 20) datos[`p${num}`] = mapScore(respuesta); }
   }
 
-  // Buscar datos complementarios en Sheets
   const infoExtra = buscarEmpleado(datos.cedula);
   if (infoExtra.found) {
     datos.sucursal = infoExtra.data.sucursal;
     datos.fechaIngreso = infoExtra.data.fechaIngreso;
-    datos.compania = infoExtra.data.compania; // ✅ Guardamos la compañía recuperada
+    datos.compania = infoExtra.data.compania; 
     if (!datos.emailEvaluado) datos.emailEvaluado = infoExtra.data.email;
   }
-  
   generarPDF(datos);
 }
 
@@ -148,26 +144,17 @@ function generarPDF(datos) {
   try {
     const template = DriveApp.getFileById(CONFIG.IDS.PLANTILLA_DOC);
     const folder = DriveApp.getFolderById(CONFIG.IDS.CARPETA_PDF);
-    
-    // Crear copia con nombre estándar
     const copy = template.makeCopy(`EVAL_${datos.cedula}_${datos.nombreEvaluado}`, folder);
     const doc = DocumentApp.openById(copy.getId());
     const body = doc.getBody();
 
     const replaces = {
-      '{{NOMBRE_EVALUADO}}': datos.nombreEvaluado, 
-      '{{CEDULA}}': datos.cedula, 
-      '{{CARGO}}': datos.cargo,
-      '{{SUCURSAL}}': datos.sucursal || '', 
-      '{{FECHA_INGRESO}}': datos.fechaIngreso || '',
-      '{{NOMBRE_EVALUADOR}}': datos.nombreEvaluador, 
-      '{{CARGO_EVALUADOR}}': datos.cargoEvaluador,
-      '{{FECHA_EVALUACION}}': datos.fechaEvaluacion, 
-      '{{EVALUACION_GLOBAL}}': datos.evaluacionGlobal,
-      '{{COMPROMISOS}}': datos.compromisos, 
-      '{{CONCEPTO_JEFE}}': datos.conceptoJefe,
-      '{{COMPANIA}}': datos.compania || 'G4S', // ✅ Variable para el documento
-      '{{Compania}}': datos.compania || 'G4S'  // ✅ Respaldo por si usan minusculas en doc
+      '{{NOMBRE_EVALUADO}}': datos.nombreEvaluado, '{{CEDULA}}': datos.cedula, '{{CARGO}}': datos.cargo,
+      '{{SUCURSAL}}': datos.sucursal || '', '{{FECHA_INGRESO}}': datos.fechaIngreso || '',
+      '{{NOMBRE_EVALUADOR}}': datos.nombreEvaluador, '{{CARGO_EVALUADOR}}': datos.cargoEvaluador,
+      '{{FECHA_EVALUACION}}': datos.fechaEvaluacion, '{{EVALUACION_GLOBAL}}': datos.evaluacionGlobal,
+      '{{COMPROMISOS}}': datos.compromisos, '{{CONCEPTO_JEFE}}': datos.conceptoJefe,
+      '{{COMPANIA}}': datos.compania || 'G4S', '{{Compania}}': datos.compania || 'G4S'
     };
 
     Object.keys(replaces).forEach(k => body.replaceText(k, replaces[k].toString()));
@@ -176,17 +163,11 @@ function generarPDF(datos) {
     doc.saveAndClose();
     const pdf = copy.getAs(MimeType.PDF);
     const pdfFile = folder.createFile(pdf);
-    copy.setTrashed(true); // Eliminar el doc temporal, dejar solo el PDF
-    
-    // Guardar registro en Sheet
+    copy.setTrashed(true);
     saveToSheet(datos, pdfFile.getUrl());
     
-    // ✅ LÓGICA DE CORREOS VERIFICADA
-    // Se envía copia al Evaluador (Jefe) y al Evaluado (si tiene correo)
     const to = [datos.emailEvaluador];
-    if (datos.emailEvaluado && datos.emailEvaluado.includes('@')) {
-      to.push(datos.emailEvaluado);
-    }
+    if (datos.emailEvaluado && datos.emailEvaluado.includes('@')) to.push(datos.emailEvaluado);
     
     MailApp.sendEmail({
       to: to.join(','), 
@@ -232,7 +213,6 @@ function saveToSheet(datos, urlPdf) {
     if (header === 'Concepto') return datos.conceptoJefe;
     if (header === 'Evglobal') return datos.evaluacionGlobal;
     if (header === 'LinkRepoteFinal') return urlPdf;
-    // Agregamos Company si existiera una columna
     if (header === 'Compania' || header === 'Empresa') return datos.compania; 
     
     if (header.startsWith('Pregunta ') || header.startsWith('P')) {
@@ -265,34 +245,43 @@ function getDashboardStats() {
 }
 
 function getReportData(inicio, fin) {
-  const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const userEmail = Session.getActiveUser().getEmail();
+  try {
+    const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const userEmail = Session.getActiveUser().getEmail();
 
-  const iFecha = headers.indexOf('Fecha de Creación');
-  const iUser = headers.indexOf('Usuario');
-  const iNombre = headers.indexOf('Nombre');
-  const iCedula = headers.indexOf('Cedula');
-  const iRes = headers.indexOf('Evglobal');
-  const iLink = headers.indexOf('LinkRepoteFinal');
+    const iFecha = headers.indexOf('Fecha de Creación');
+    const iUser = headers.indexOf('Usuario');
+    const iNombre = headers.indexOf('Nombre');
+    const iCedula = headers.indexOf('Cedula');
+    const iRes = headers.indexOf('Evglobal');
+    const iLink = headers.indexOf('LinkRepoteFinal');
 
-  const d1 = new Date(inicio); d1.setHours(0,0,0,0);
-  const d2 = new Date(fin); d2.setHours(23,59,59,999);
+    // Convertir strings de fecha a objetos Date
+    // Se asume formato YYYY-MM-DD del input HTML
+    const d1 = new Date(inicio + "T00:00:00"); 
+    const d2 = new Date(fin + "T23:59:59"); 
 
-  const filtrados = data.slice(1).filter(r => {
-    const fechaRow = new Date(r[iFecha]);
-    const userRow = r[iUser];
-    return userRow === userEmail && fechaRow >= d1 && fechaRow <= d2;
-  });
+    const filtrados = data.slice(1).filter(r => {
+      const fechaRow = new Date(r[iFecha]);
+      const userRow = r[iUser];
+      // Compara si el correo coincide y si la fecha está en rango válido
+      return userRow === userEmail && fechaRow >= d1 && fechaRow <= d2;
+    });
 
-  return filtrados.map(r => ({
-    fecha: formatFecha(r[iFecha]),
-    nombre: r[iNombre],
-    cedula: r[iCedula],
-    resultado: r[iRes],
-    link: r[iLink]
-  }));
+    // Mapeo seguro para evitar errores si faltan datos
+    return filtrados.map(r => ({
+      fecha: formatFecha(r[iFecha]),
+      nombre: r[iNombre] || 'Desconocido',
+      cedula: r[iCedula] || '-',
+      resultado: r[iRes] || '-',
+      link: r[iLink] || '#'
+    }));
+  } catch(e) {
+    console.error("Error en Reportes: " + e.message);
+    return [];
+  }
 }
 
 function getUsersData() {
@@ -367,6 +356,7 @@ function modifyFormQuestion(action, data) {
   } catch(e) { return { error: e.message }; }
 }
 
+// --- UTILIDADES ---
 function formatFecha(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -379,15 +369,11 @@ function mapScore(val) {
   if (val.includes('DEFICIENTE')) return 'D'; if (val.includes('REGULAR')) return 'R';
   return val.substring(0, 1);
 }
-/**
- * ⚠️ EJECUTAR ESTA FUNCIÓN UNA SOLA VEZ MANUALMENTE ⚠️
- * Esto conecta el Formulario con el Script para que envíe los correos.
- */
+
+// ⚠️ ACTIVADOR (Solo ejecutar una vez)
 function instalarDisparador() {
   try {
     const form = FormApp.openById(CONFIG.IDS.FORM_ID);
-    
-    // Verificamos si ya existe para no duplicar
     const triggers = ScriptApp.getProjectTriggers();
     for (const t of triggers) {
       if (t.getHandlerFunction() === 'procesarFormulario') {
@@ -395,16 +381,7 @@ function instalarDisparador() {
         return;
       }
     }
-
-    // Crear el activador
-    ScriptApp.newTrigger('procesarFormulario')
-      .forForm(form)
-      .onFormSubmit()
-      .create();
-      
-    console.log('✅ ACTIVADOR INSTALADO CON ÉXITO. Ahora los correos llegarán.');
-    
-  } catch (e) {
-    console.error('❌ Error instalando activador: ' + e.message);
-  }
+    ScriptApp.newTrigger('procesarFormulario').forForm(form).onFormSubmit().create();
+    console.log('✅ ACTIVADOR INSTALADO CON ÉXITO.');
+  } catch (e) { console.error('❌ Error instalando activador: ' + e.message); }
 }
