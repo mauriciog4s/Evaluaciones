@@ -1,6 +1,6 @@
 /**
  * 📘 PORTAL DE EVALUACIÓN DE DESEMPEÑO G4S - BACKEND PRO
- * Versión: 8.0 (Dashboard Gráfico + Reportes Funcionales)
+ * Versión: 9.0 (Control de Roles por Matriz de Permisos)
  */
 
 const CONFIG = {
@@ -52,13 +52,16 @@ function getInitData() {
     if (!usuario) return { error: true, message: 'ACCESO DENEGADO: Su usuario no tiene permisos activos.' };
 
     const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol] : 'Usuario';
-    const isAdmin = ['Administrador', 'Admin', 'UsuarioAdministrador'].includes(userRole);
+    
+    // El "UsuarioAdministrador" tiene acceso a herramientas admin, pero el logicamente 
+    // definimos isAdmin para mostrar el menu de administración en la UI.
+    const isAdminUI = ['Administrador', 'UsuarioAdministrador'].includes(userRole);
 
     return { 
       success: true, 
       email: userEmail, 
       role: userRole,
-      isAdmin: isAdmin,
+      isAdmin: isAdminUI,
       formUrlBase: CONFIG.URLS.FORM_BASE,
       templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`,
       dashboard: getDashboardStats()
@@ -246,10 +249,15 @@ function getDashboardStats() {
 
 function getReportData(inicio, fin) {
   try {
+    const userInit = getInitData();
+    if (userInit.error) return [];
+    
+    const userRole = userInit.role;
+    const userEmail = userInit.email;
+
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
-    const userEmail = Session.getActiveUser().getEmail();
 
     const iFecha = headers.indexOf('Fecha de Creación');
     const iUser = headers.indexOf('Usuario');
@@ -258,19 +266,23 @@ function getReportData(inicio, fin) {
     const iRes = headers.indexOf('Evglobal');
     const iLink = headers.indexOf('LinkRepoteFinal');
 
-    // Convertir strings de fecha a objetos Date
-    // Se asume formato YYYY-MM-DD del input HTML
     const d1 = new Date(inicio + "T00:00:00"); 
     const d2 = new Date(fin + "T23:59:59"); 
 
     const filtrados = data.slice(1).filter(r => {
       const fechaRow = new Date(r[iFecha]);
-      const userRow = r[iUser];
-      // Compara si el correo coincide y si la fecha está en rango válido
-      return userRow === userEmail && fechaRow >= d1 && fechaRow <= d2;
+      const userRow = (r[iUser] || "").toString().toLowerCase();
+      
+      const enFecha = fechaRow >= d1 && fechaRow <= d2;
+      
+      // Filtro de Roles:
+      // Administrador ve todo.
+      // Otros ven solo sus evaluaciones (basado en el correo logueado).
+      if (userRole === 'Administrador') return enFecha;
+      
+      return enFecha && userRow === userEmail.toLowerCase();
     });
 
-    // Mapeo seguro para evitar errores si faltan datos
     return filtrados.map(r => ({
       fecha: formatFecha(r[iFecha]),
       nombre: r[iNombre] || 'Desconocido',
@@ -370,18 +382,13 @@ function mapScore(val) {
   return val.substring(0, 1);
 }
 
-// ⚠️ ACTIVADOR (Solo ejecutar una vez)
 function instalarDisparador() {
   try {
     const form = FormApp.openById(CONFIG.IDS.FORM_ID);
     const triggers = ScriptApp.getProjectTriggers();
     for (const t of triggers) {
-      if (t.getHandlerFunction() === 'procesarFormulario') {
-        console.log('✅ El activador ya estaba instalado.');
-        return;
-      }
+      if (t.getHandlerFunction() === 'procesarFormulario') return;
     }
     ScriptApp.newTrigger('procesarFormulario').forForm(form).onFormSubmit().create();
-    console.log('✅ ACTIVADOR INSTALADO CON ÉXITO.');
-  } catch (e) { console.error('❌ Error instalando activador: ' + e.message); }
+  } catch (e) {}
 }
