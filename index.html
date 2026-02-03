@@ -38,33 +38,36 @@
 
     .hidden { display: none !important; }
     
-    .skeleton-box { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    /* Efecto Glassmorphism solicitado */
     .glass-overlay {
       background: rgba(15, 23, 42, 0.3);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       transition: all 0.4s ease;
     }
+
+    /* Skeleton Loading Animation */
+    .skeleton-row {
+      height: 20px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body onload="initApp()">
 
-  <!-- LOADER INICIAL -->
   <div id="system-loader">
     <div class="w-12 h-12 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-4"></div>
     <div class="text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase animate-pulse">Cargando G4S...</div>
   </div>
 
-  <!-- HEADER MOBILE -->
   <header id="mobile-header" class="fixed top-0 left-0 right-0 h-16 bg-white border-b z-[500] px-4 hidden items-center justify-between">
       <img src="https://www.g4s.com/es-co/-/media/g4s/global/images/logos/g4s---an-allied-universal-company-logo/g4s_one-company_logo_180x136.ashx" class="h-8">
       <button onclick="toggleMenu()" class="p-2 text-gray-600"><span class="material-icons">menu</span></button>
   </header>
 
-  <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="p-8 flex justify-center border-b border-gray-100">
       <img src="https://www.g4s.com/es-co/-/media/g4s/global/images/logos/g4s---an-allied-universal-company-logo/g4s_one-company_logo_180x136.ashx" class="h-10">
@@ -74,7 +77,6 @@
       <div onclick="nav('evaluar')" class="nav-item hidden" id="m-evaluar"><span class="material-icons mr-3">assignment_ind</span> Evaluar Talento</div>
       <div onclick="nav('mis-evaluaciones')" class="nav-item hidden" id="m-mis-evaluaciones"><span class="material-icons mr-3">history</span> Mis Evaluaciones</div>
       
-      <!-- MENU ADMIN -->
       <div id="admin-menu" class="hidden border-t border-gray-100 mt-4 pt-4">
         <p class="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Administración</p>
         <div onclick="nav('usuarios')" class="nav-item hidden" id="m-usuarios"><span class="material-icons mr-3">people</span> Usuarios</div>
@@ -89,10 +91,8 @@
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <div id="main-wrapper">
     
-    <!-- 1. INICIO -->
     <section id="sec-inicio" class="hidden animate__animated animate__fadeIn">
       <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tight">Resumen General</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -139,7 +139,6 @@
       </div>
     </section>
 
-    <!-- 2. EVALUAR -->
     <section id="sec-evaluar" class="hidden">
       <div class="max-w-2xl mx-auto mt-6">
         <h2 class="text-2xl font-black text-center mb-8 uppercase">Evaluar Talento</h2>
@@ -166,7 +165,6 @@
       </div>
     </section>
 
-    <!-- 3. MIS EVALUACIONES -->
     <section id="sec-mis-evaluaciones" class="hidden">
       <h2 class="text-2xl font-black mb-6 uppercase">Mis Evaluaciones</h2>
       <div class="bg-white p-4 rounded-xl border mb-6 flex gap-4 flex-wrap items-end shadow-sm">
@@ -183,31 +181,49 @@
       </div>
     </section>
 
-    <!-- 4. USUARIOS -->
     <section id="sec-usuarios" class="hidden">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-black uppercase">Gestión Usuarios</h2>
-        <button onclick="modalUsuario('CREATE')" class="bg-[#c1272d] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2"><span class="material-icons text-sm">add</span> Nuevo</button>
+        <button onclick="modalUsuario('CREATE')" class="bg-[#c1272d] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
+          <span class="material-icons text-sm">add</span> Nuevo
+        </button>
       </div>
       <div class="bg-white rounded-xl border overflow-hidden">
-        <table class="w-full text-left text-sm"><thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Nombre</th><th class="p-4">Correo</th><th class="p-4">Rol</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr></thead><tbody id="users-body" class="divide-y"></tbody></table>
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
+            <tr><th class="p-4">Nombre</th><th class="p-4">Correo</th><th class="p-4">Rol</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr>
+          </thead>
+          <tbody id="users-body" class="divide-y">
+             <tr>
+               <td class="p-4"><div class="skeleton-row w-3/4"></div></td>
+               <td class="p-4"><div class="skeleton-row w-1/2"></div></td>
+               <td class="p-4"><div class="skeleton-row w-1/4"></div></td>
+               <td class="p-4"><div class="skeleton-row w-20"></div></td>
+               <td class="p-4"><div class="skeleton-row w-10"></div></td>
+             </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- 5. FORMULARIO -->
     <section id="sec-formulario" class="hidden">
       <h2 class="text-2xl font-black mb-6 uppercase">Editor de Preguntas</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-4" id="questions-list"></div>
-        <div class="bg-white p-6 rounded-xl border h-fit sticky top-4">
-           <h3 class="font-bold mb-4">Acciones</h3>
-           <button onclick="addQuestion()" class="w-full py-3 bg-slate-800 text-white rounded-lg font-bold text-sm mb-4">Agregar Pregunta</button>
-           <a id="link-edit-form" href="#" target="_blank" class="block text-center text-xs text-blue-600 font-bold hover:underline">Edición Avanzada</a>
+        <div class="lg:col-span-2 space-y-4" id="questions-list">
+          </div>
+        <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
+           <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
+           <button onclick="addQuestion()" class="w-full py-3 bg-slate-800 hover:bg-black transition text-white rounded-lg font-bold text-sm mb-4 flex justify-center gap-2 items-center">
+             <span class="material-icons text-sm">add_circle</span> Agregar Pregunta
+           </button>
+           <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+             <p class="text-[10px] text-blue-600 mb-2 font-bold uppercase">Nota Técnica:</p>
+             <p class="text-xs text-blue-800 leading-relaxed">Los cambios en el formulario se reflejan inmediatamente en la App de Google Forms.</p>
+           </div>
         </div>
       </div>
     </section>
 
-    <!-- 6. PLANTILLA -->
     <section id="sec-plantilla" class="hidden">
       <h2 class="text-2xl font-black mb-6 uppercase">Gestión de Plantilla</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -224,9 +240,30 @@
         <div class="bg-white p-6 rounded-2xl border shadow-sm h-fit">
           <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><span class="material-icons text-yellow-500 text-sm">warning</span> Variables del Sistema</h4>
           <div class="bg-gray-50 p-3 rounded-lg border text-xs font-mono space-y-2 max-h-96 overflow-y-auto">
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 mb-1">Evaluado</p>
             <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{NOMBRE_EVALUADO}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{CEDULA}}</span></div>
-            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{EVALUACION_GLOBAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{CARGO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{SUCURSAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{FECHA_INGRESO}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Evaluador</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-purple-600">{{NOMBRE_EVALUADOR}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-purple-600">{{CARGO_EVALUADOR}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Resultados</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600 font-bold">{{EVALUACION_GLOBAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FECHA_EVALUACION}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{COMPANIA}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Comentarios</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{COMPROMISOS}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{CONCEPTO_JEFE}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Preguntas (1-20)</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-gray-500">{{P1}} ... {{P20}}</span></div>
+
           </div>
         </div>
       </div>
@@ -234,7 +271,6 @@
 
   </div>
 
-  <!-- MODAL FORMULARIO EMBEBIDO -->
   <div id="modal-form-embed" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
     <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
         <div class="bg-white p-4 border-b flex justify-between items-center z-20"><h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3><button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button></div>
@@ -242,21 +278,56 @@
     </div>
   </div>
 
-  <!-- MODAL USUARIO -->
-  <div id="modal-user" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[2000] p-4">
-     <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
-        <h3 class="font-black text-lg mb-4 uppercase">Usuario</h3>
-        <form id="form-user" onsubmit="saveUser(event)" class="space-y-3">
-           <input type="hidden" id="u-action"><input type="hidden" id="u-row">
-           <input id="u-nombre" placeholder="Nombre" class="w-full border p-2 rounded outline-none" required>
-           <input id="u-correo" placeholder="Correo Google" class="w-full border p-2 rounded outline-none" required>
-           <div class="grid grid-cols-2 gap-2">
-             <select id="u-rol" class="w-full border p-2 rounded outline-none bg-white"><option>Administrador</option><option>Evaluador</option><option>UsuarioAdministrador</option><option>Usuario</option></select>
-             <select id="u-estado" class="w-full border p-2 rounded outline-none bg-white"><option>Activo</option><option>Inactivo</option></select>
-           </div>
-           <div class="flex gap-2 pt-4"><button type="button" onclick="document.getElementById('modal-user').classList.add('hidden')" class="flex-1 py-2 text-gray-500 font-bold text-xs uppercase hover:bg-gray-100 rounded">Cancelar</button><button type="submit" class="flex-1 py-2 bg-red-600 text-white rounded font-bold text-xs uppercase hover:bg-red-700">Guardar</button></div>
-        </form>
-     </div>
+  <div id="modal-user" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[2000] p-4">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+          <span class="material-icons">person_add</span>
+        </div>
+        <h3 id="modal-user-title" class="font-black text-xl uppercase tracking-tight">Usuario</h3>
+      </div>
+      
+      <form id="form-user" onsubmit="saveUser(event)" class="space-y-4">
+        <input type="hidden" id="u-action"><input type="hidden" id="u-row">
+        
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre Completo</label>
+          <input id="u-nombre" placeholder="Ej: Mauricio Gaitan" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500 transition-colors" required>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Correo Electrónico</label>
+          <input id="u-correo" type="email" placeholder="usuario@g4s.com" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500 transition-colors" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Rol</label>
+            <select id="u-rol" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none bg-white focus:border-red-500 transition-colors">
+              <option>Administrador</option>
+              <option>Evaluador</option>
+              <option>UsuarioAdministrador</option>
+              <option>Usuario</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Estado</label>
+            <select id="u-estado" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none bg-white focus:border-red-500 transition-colors">
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-6">
+          <button type="button" onclick="document.getElementById('modal-user').classList.add('hidden')" class="flex-1 py-3 text-gray-500 font-bold text-xs uppercase hover:bg-gray-100 rounded-xl transition-all">Cancelar</button>
+          <button type="submit" id="btn-save-user" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+            <span id="btn-save-text">Guardar</span>
+            <span id="btn-save-loader" class="hidden material-icons animate-spin text-sm">sync</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -266,15 +337,7 @@
     let reportData = [];
     let myChart = null;
 
-    /**
-     * CONFIGURACIÓN DE ACCESO SEGÚN ROLES
-     */
     function aplicarPermisos(role) {
-      // 1. Administrador: todo
-      // 2. Evaluador: inicio, evaluar talento, mis evaluaciones
-      // 3. UsuarioAdministrador: usuarios, formulario, plantilla
-      // 4. Usuario: mis evaluaciones
-      
       const permissions = {
         'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-plantilla', 'admin-menu'],
         'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
@@ -282,22 +345,19 @@
         'Usuario': ['m-mis-evaluaciones']
       };
 
-      const myPermissions = permissions[role] || ['m-mis-evaluaciones']; // Default Usuario
+      const myPermissions = permissions[role] || ['m-mis-evaluaciones']; 
       
-      // Ocultar todos los items primero
       const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-plantilla', 'admin-menu'];
       allItems.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
 
-      // Mostrar los permitidos
       myPermissions.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('hidden');
       });
 
-      // Redirigir a la primera sección válida
       if (myPermissions.includes('m-inicio')) nav('inicio');
       else if (myPermissions.includes('m-usuarios')) nav('usuarios');
       else nav('mis-evaluaciones');
@@ -433,20 +493,55 @@
       const a = document.createElement('a'); a.href = url; a.download = 'reporte_g4s.csv'; a.click();
     }
 
+    // --- FUNCIONES ACTUALIZADAS DE USUARIOS ---
     function loadUsers() {
       if(typeof google === 'undefined') return;
+      
+      const skeletonHtml = `<tr>${'<td class="p-4"><div class="skeleton-row w-full"></div></td>'.repeat(5)}</tr>`.repeat(3);
+      document.getElementById('users-body').innerHTML = skeletonHtml;
+
       google.script.run.withSuccessHandler(users => {
          usersList = users;
-         const html = users.map(u => `<tr class="border-b hover:bg-gray-50 transition"><td class="p-4 font-bold">${u.nombre}</td><td class="p-4 text-xs text-gray-500">${u.correo}</td><td class="p-4 text-xs">${u.rol}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td><td class="p-4"><button onclick="editUser(${u.row})" class="text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="text-red-600 ml-2"><span class="material-icons text-sm">delete</span></button></td></tr>`).join('');
-         document.getElementById('users-body').innerHTML = html;
+         const html = users.map(u => `
+            <tr class="border-b hover:bg-gray-50 transition">
+              <td class="p-4 font-bold text-gray-700">${u.nombre}</td>
+              <td class="p-4 text-xs text-gray-500">${u.correo}</td>
+              <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
+              <td class="p-4">
+                <span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                  ${u.estado}
+                </span>
+              </td>
+              <td class="p-4">
+                <div class="flex gap-1">
+                  <button onclick="editUser(${u.row})" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><span class="material-icons text-sm">edit</span></button>
+                  <button onclick="deleteUser(${u.row})" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"><span class="material-icons text-sm">delete</span></button>
+                </div>
+              </td>
+            </tr>`).join('');
+         document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No hay usuarios registrados.</td></tr>';
       }).getUsersData();
     }
 
     function modalUsuario(action, row = null) {
-      document.getElementById('modal-user').classList.remove('hidden');
+      const modal = document.getElementById('modal-user');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      
       document.getElementById('u-action').value = action;
       document.getElementById('u-row').value = row || '';
       document.getElementById('form-user').reset();
+      
+      const btn = document.getElementById('btn-save-user');
+      const loader = document.getElementById('btn-save-loader');
+      const btnText = document.getElementById('btn-save-text');
+      btn.disabled = false;
+      btn.classList.remove('opacity-70');
+      loader.classList.add('hidden');
+      btnText.innerText = 'Guardar';
+
+      document.getElementById('modal-user-title').innerText = action === 'CREATE' ? 'Nuevo Usuario' : 'Editar Usuario';
+
       if(action === 'UPDATE' && row) {
         const u = usersList.find(x => x.row === row);
         if(u) {
@@ -459,13 +554,145 @@
     }
     
     function editUser(row) { modalUsuario('UPDATE', row); }
-    function saveUser(e) { e.preventDefault(); if(typeof google === 'undefined') return; google.script.run.withSuccessHandler(() => { document.getElementById('modal-user').classList.add('hidden'); loadUsers(); Swal.fire('Guardado', '', 'success'); }).saveUser(document.getElementById('u-action').value, {row: document.getElementById('u-row').value, nombre: document.getElementById('u-nombre').value, correo: document.getElementById('u-correo').value, rol: document.getElementById('u-rol').value, estado: document.getElementById('u-estado').value}); }
-    function deleteUser(row) { Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true}).then(r => { if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); }); }
 
-    function loadQuestions() { if(typeof google === 'undefined') return; google.script.run.withSuccessHandler(list => { const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm"><div><span class="font-bold text-gray-800 text-sm">${q.title}</span></div><div class="flex gap-2"><button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-gray-100 rounded"><span class="material-icons text-sm text-gray-600">edit</span></button><button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 rounded"><span class="material-icons text-sm text-red-600">delete</span></button></div></div>`).join(''); document.getElementById('questions-list').innerHTML = html || '<p>No hay preguntas.</p>'; }).getFormStructure(); }
-    function addQuestion() { Swal.fire({ title: 'Nueva Pregunta', input: 'text', showCancelButton: true }).then(r => { if(r.isConfirmed && r.value) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('ADD', {title: r.value}); }); }
-    function delQuestion(id) { Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true}).then(r => { if(r.isConfirmed) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('DELETE', {id: id}); }); }
-    function editQuestion(id, currentTitle) { Swal.fire({ title: 'Editar', input: 'text', inputValue: currentTitle, showCancelButton: true }).then(r => { if(r.isConfirmed && r.value) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('UPDATE', {id: id, title: r.value}); }); }
+    function saveUser(e) { 
+      e.preventDefault(); 
+      if(typeof google === 'undefined') return; 
+
+      const btn = document.getElementById('btn-save-user');
+      const loader = document.getElementById('btn-save-loader');
+      const btnText = document.getElementById('btn-save-text');
+
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+      loader.classList.remove('hidden');
+      btnText.innerText = 'Procesando...';
+
+      google.script.run.withSuccessHandler(() => { 
+        document.getElementById('modal-user').classList.add('hidden'); 
+        loadUsers(); 
+        Swal.fire('Guardado', '', 'success'); 
+      }).saveUser(document.getElementById('u-action').value, {
+        row: document.getElementById('u-row').value, 
+        nombre: document.getElementById('u-nombre').value, 
+        correo: document.getElementById('u-correo').value, 
+        rol: document.getElementById('u-rol').value, 
+        estado: document.getElementById('u-estado').value
+      }); 
+    }
+
+    function deleteUser(row) { 
+      Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d'}).then(r => { 
+        if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); 
+      }); 
+    }
+
+    // --- FUNCIONES MEJORADAS DEL EDITOR DE PREGUNTAS (CON SPINNERS Y SKELETONS) ---
+    function loadQuestions() { 
+      if(typeof google === 'undefined') return; 
+      
+      // Skeleton para Preguntas
+      const skeletonCard = `
+      <div class="bg-white p-4 rounded-xl border shadow-sm space-y-3">
+         <div class="skeleton-row w-3/4 h-4"></div>
+         <div class="flex justify-end gap-2">
+            <div class="skeleton-row w-8 h-8 rounded"></div>
+            <div class="skeleton-row w-8 h-8 rounded"></div>
+         </div>
+      </div>`;
+      document.getElementById('questions-list').innerHTML = skeletonCard.repeat(3);
+
+      google.script.run.withSuccessHandler(list => { 
+        const html = list.map(q => `
+          <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition">
+            <div class="flex items-center gap-3">
+               <span class="material-icons text-gray-300 text-sm">drag_indicator</span>
+               <span class="font-bold text-gray-800 text-sm">${q.title}</span>
+            </div>
+            <div class="flex gap-2">
+               <button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button>
+               <button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button>
+            </div>
+          </div>`).join(''); 
+        document.getElementById('questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay preguntas configuradas.</p>'; 
+      }).getFormStructure(); 
+    }
+
+    function addQuestion() { 
+      Swal.fire({ 
+        title: 'Nueva Pregunta', 
+        input: 'text', 
+        inputPlaceholder: 'Escriba la pregunta aquí...',
+        showCancelButton: true,
+        confirmButtonColor: '#231f20',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Guardar'
+      }).then(r => { 
+        if(r.isConfirmed && r.value) {
+            Swal.fire({
+                title: 'Guardando en Forms...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            google.script.run.withSuccessHandler(() => {
+                Swal.close();
+                loadQuestions();
+                Swal.fire({icon: 'success', title: 'Agregada', timer: 1500, showConfirmButton: false});
+            }).modifyFormQuestion('ADD', {title: r.value}); 
+        }
+      }); 
+    }
+
+    function delQuestion(id) { 
+      Swal.fire({
+        title: '¿Eliminar Pregunta?', 
+        text: "Esta acción borrará la pregunta del formulario oficial.",
+        icon:'warning', 
+        showCancelButton:true,
+        confirmButtonColor: '#c1272d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then(r => { 
+        if(r.isConfirmed) {
+            Swal.fire({
+                title: 'Eliminando...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            google.script.run.withSuccessHandler(() => {
+                Swal.close();
+                loadQuestions();
+                Swal.fire({icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false});
+            }).modifyFormQuestion('DELETE', {id: id}); 
+        }
+      }); 
+    }
+
+    function editQuestion(id, currentTitle) { 
+      Swal.fire({ 
+        title: 'Editar Pregunta', 
+        input: 'text', 
+        inputValue: currentTitle, 
+        showCancelButton: true,
+        confirmButtonColor: '#231f20',
+        confirmButtonText: 'Actualizar'
+      }).then(r => { 
+        if(r.isConfirmed && r.value) {
+            Swal.fire({
+                title: 'Actualizando...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            google.script.run.withSuccessHandler(() => {
+                Swal.close();
+                loadQuestions();
+                Swal.fire({icon: 'success', title: 'Actualizada', timer: 1500, showConfirmButton: false});
+            }).modifyFormQuestion('UPDATE', {id: id, title: r.value}); 
+        }
+      }); 
+    }
+
     function abrirPlantillaDocs() { if(appData && appData.templateUrl) window.open(appData.templateUrl, '_blank'); }
   </script>
 </body>
