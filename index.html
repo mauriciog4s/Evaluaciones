@@ -46,6 +46,14 @@
     
     .skeleton-box { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Estilo mejorado para el efecto de vidrio del modal */
+    .glass-overlay {
+      background: rgba(15, 23, 42, 0.3); /* Color pizarra muy suave */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.4s ease;
+    }
   </style>
 </head>
 <body onload="initApp()">
@@ -274,16 +282,24 @@
      </div>
   </div>
 
-  <!-- MODAL FORMULARIO EMBEBIDO -->
-  <div id="modal-form-embed" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[3000] p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
+  <!-- MODAL FORMULARIO EMBEBIDO CON EFECTO GLASSMORFISMO -->
+  <div id="modal-form-embed" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
         <div class="bg-white p-4 border-b flex justify-between items-center shadow-sm z-20">
-            <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3>
-            <button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-colors"><span class="material-icons">close</span></button>
+            <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+              <span class="material-icons text-red-600">assignment</span> 
+              <span>Evaluación de Desempeño</span>
+            </h3>
+            <button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90">
+              <span class="material-icons">close</span>
+            </button>
         </div>
         <div class="flex-grow overflow-hidden relative bg-gray-50">
              <div id="form-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-white">
-                <div class="flex flex-col items-center"><div class="w-10 h-10 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-2"></div><span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Cargando Formulario...</span></div>
+                <div class="flex flex-col items-center">
+                  <div class="w-10 h-10 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-2"></div>
+                  <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Iniciando Formulario...</span>
+                </div>
              </div>
              <iframe id="gform-frame" src="" class="w-full h-full border-0" onload="document.getElementById('form-loader').classList.add('hidden')"></iframe>
         </div>
@@ -300,55 +316,73 @@
     const skeletonUserRow = `<tr class="animate-pulse border-b"><td class="p-4"><div class="h-4 bg-gray-200 rounded w-3/4 skeleton-box"></div></td><td class="p-4"><div class="h-4 bg-gray-200 rounded w-1/2 skeleton-box"></div></td><td class="p-4"><div class="h-4 bg-gray-200 rounded w-1/4 skeleton-box"></div></td><td class="p-4"><div class="h-6 bg-gray-200 rounded-full w-16 skeleton-box"></div></td><td class="p-4"><div class="h-4 bg-gray-200 rounded w-8 skeleton-box"></div></td></tr>`;
     const skeletonQuestionCard = `<div class="bg-white p-4 rounded-xl border shadow-sm animate-pulse flex justify-between items-center"><div class="h-4 bg-gray-200 rounded w-2/3 skeleton-box"></div><div class="flex gap-2"><div class="w-8 h-8 bg-gray-200 rounded skeleton-box"></div><div class="w-8 h-8 bg-gray-200 rounded skeleton-box"></div></div></div>`;
 
+    /**
+     * Función principal de inicio con validación de seguridad para evitar ReferenceError
+     */
     function initApp() {
-      google.script.run
-        .withSuccessHandler(data => {
-           const loader = document.getElementById('system-loader');
-           
-           // MANEJO CORRECTO DE ERRORES AL INICIO
-           if(data.error) {
-             loader.innerHTML = `
-               <div class="text-center p-8">
-                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
-                   <span class="material-icons text-3xl">block</span>
+      // Verificación de seguridad: ¿Estamos en el entorno correcto de Google?
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(data => {
+             const loader = document.getElementById('system-loader');
+             
+             if(data.error) {
+               loader.innerHTML = `
+                 <div class="text-center p-8">
+                   <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                     <span class="material-icons text-3xl">block</span>
+                   </div>
+                   <h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3>
+                   <p class="text-sm text-slate-500 mb-6">${data.message}</p>
+                   <a href="https://accounts.google.com/Logout" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase hover:bg-black transition">Cerrar Sesión</a>
                  </div>
-                 <h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3>
-                 <p class="text-sm text-slate-500 mb-6">${data.message}</p>
-                 <a href="https://accounts.google.com/Logout" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase hover:bg-black transition">Cerrar Sesión</a>
-               </div>
-             `;
-             return; 
-           }
+               `;
+               return; 
+             }
 
-           appData = data;
-           
-           // Ocultar Loader suavemente
-           loader.classList.add('loader-hidden');
-           setTimeout(() => loader.style.display = 'none', 500);
+             appData = data;
+             loader.classList.add('loader-hidden');
+             setTimeout(() => loader.style.display = 'none', 500);
 
-           document.getElementById('user-email-display').innerText = data.email;
-           document.getElementById('user-role-display').innerText = data.role;
-           
-           if(data.isAdmin) document.getElementById('admin-menu').classList.remove('hidden');
-           document.getElementById('modal-user').classList.add('hidden');
+             document.getElementById('user-email-display').innerText = data.email;
+             document.getElementById('user-role-display').innerText = data.role;
+             
+             if(data.isAdmin) document.getElementById('admin-menu').classList.remove('hidden');
+             document.getElementById('modal-user').classList.add('hidden');
 
-           if(data.dashboard) renderDashboard(data.dashboard);
-        })
-        .withFailureHandler(err => {
-           document.getElementById('system-loader').innerHTML = `
-             <div class="text-center text-red-600 p-6">
-               <span class="material-icons text-4xl mb-2">wifi_off</span>
-               <p class="font-bold">Error de Conexión</p>
-               <p class="text-xs mb-4">No se pudo cargar el sistema.</p>
-               <button onclick="location.reload()" class="underline font-bold">Reintentar</button>
-             </div>`;
-        })
-        .getInitData();
+             if(data.dashboard) renderDashboard(data.dashboard);
+          })
+          .withFailureHandler(err => {
+             document.getElementById('system-loader').innerHTML = `
+               <div class="text-center text-red-600 p-6">
+                 <span class="material-icons text-4xl mb-2">wifi_off</span>
+                 <p class="font-bold">Error de Conexión</p>
+                 <p class="text-xs mb-4">No se pudo cargar el sistema.</p>
+                 <button onclick="location.reload()" class="underline font-bold">Reintentar</button>
+               </div>`;
+          })
+          .getInitData();
+      } else {
+        // Manejo de error para entornos de previsualización fuera de Apps Script
+        console.warn("Entorno Google Apps Script no detectado.");
+        const loader = document.getElementById('system-loader');
+        if (loader) {
+          loader.innerHTML = `
+            <div class="text-center p-8">
+              <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
+                <span class="material-icons text-3xl">cloud_off</span>
+              </div>
+              <h3 class="text-xl font-bold text-slate-800 mb-2">Modo Vista Previa</h3>
+              <p class="text-sm text-slate-500 mb-6">El API de Google no está disponible en este entorno. Por favor, ejecute la aplicación desde el enlace oficial de Google Apps Script para que funcione correctamente.</p>
+              <button onclick="location.reload()" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase hover:bg-black transition">Reintentar</button>
+            </div>
+          `;
+        }
+      }
     }
 
     function renderDashboard(dash) {
         document.getElementById('stat-total-badge').innerText = `Total: ${dash.total}`;
-        
         const canvas = document.getElementById('myChart');
         if(canvas) {
             const ctx = canvas.getContext('2d');
@@ -386,14 +420,10 @@
       if(id === 'usuarios') loadUsers();
       if(id === 'formulario') loadQuestions();
       
-      // AUTO CARGAR REPORTES DEL MES ACTUAL
       if(id === 'mis-evaluaciones') {
           const date = new Date();
-          // Primer día del mes
           const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-          // Último día del mes
           const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
-          
           document.getElementById('report-start').value = firstDay;
           document.getElementById('report-end').value = lastDay;
           cargarReportes();
@@ -418,7 +448,7 @@
 
     function buscarEmpleado() {
       const cedula = document.getElementById('input-cedula').value;
-      if(!cedula) return;
+      if(!cedula || typeof google === 'undefined') return;
       const btn = document.getElementById('btn-buscar'); 
       const originalText = btn.innerText;
       btn.innerHTML = '<span class="material-icons animate-spin text-sm mr-2">sync</span> Buscando...';
@@ -475,10 +505,8 @@
     function cargarReportes() {
       const i = document.getElementById('report-start').value;
       const f = document.getElementById('report-end').value;
-      if(!i || !f) return;
-      
+      if(!i || !f || typeof google === 'undefined') return;
       document.getElementById('report-body').innerHTML = '<tr><td colspan="4" class="p-8 text-center"><div class="flex justify-center"><div class="w-8 h-8 border-4 border-gray-100 border-t-red-600 rounded-full animate-spin"></div></div></td></tr>';
-      
       google.script.run.withSuccessHandler(rows => {
          reportData = rows;
          const html = rows.map(r => `
@@ -503,6 +531,7 @@
     }
 
     function loadUsers() {
+      if(typeof google === 'undefined') return;
       document.getElementById('users-body').innerHTML = skeletonUserRow.repeat(5);
       google.script.run.withSuccessHandler(users => {
          usersList = users;
@@ -531,6 +560,7 @@
 
     function saveUser(e) {
       e.preventDefault();
+      if(typeof google === 'undefined') return;
       const data = {
         row: document.getElementById('u-row').value,
         nombre: document.getElementById('u-nombre').value,
@@ -547,12 +577,14 @@
     }
 
     function deleteUser(row) {
+      if(typeof google === 'undefined') return;
       Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33'}).then(r => {
         if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row});
       });
     }
 
     function loadQuestions() {
+      if(typeof google === 'undefined') return;
       document.getElementById('questions-list').innerHTML = skeletonQuestionCard.repeat(4);
       google.script.run.withSuccessHandler(list => {
          const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div><span class="font-bold text-gray-800 text-sm">${q.title}</span></div><div class="flex gap-2"><button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-gray-100 rounded hover:bg-gray-200"><span class="material-icons text-sm text-gray-600">edit</span></button><button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 rounded hover:bg-red-100"><span class="material-icons text-sm text-red-600">delete</span></button></div></div>`).join('');
@@ -561,18 +593,21 @@
     }
 
     function addQuestion() {
+      if(typeof google === 'undefined') return;
       Swal.fire({ title: 'Nueva Pregunta', input: 'text', inputLabel: 'Texto de la pregunta', showCancelButton: true, confirmButtonColor: '#231f20' }).then(r => {
         if(r.isConfirmed && r.value) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('ADD', {title: r.value});
       });
     }
 
     function delQuestion(id) {
+       if(typeof google === 'undefined') return;
        Swal.fire({title:'¿Eliminar pregunta?', text:'Esto no se puede deshacer', icon:'warning', showCancelButton:true}).then(r => {
          if(r.isConfirmed) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('DELETE', {id: id});
        });
     }
 
     function editQuestion(id, currentTitle) {
+      if(typeof google === 'undefined') return;
       Swal.fire({ title: 'Editar Pregunta', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#231f20' }).then(r => {
         if(r.isConfirmed && r.value) google.script.run.withSuccessHandler(loadQuestions).modifyFormQuestion('UPDATE', {id: id, title: r.value});
       });
