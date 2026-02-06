@@ -99,7 +99,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
            <div class="flex justify-between items-center mb-4">
-             <h3 class="font-bold text-gray-700">Distribución de Calificaciones</h3>
+             <h3 class="font-bold text-gray-700">Distribución de Calificaciones (1-5)</h3>
              <span id="stat-total-badge" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">Total: 0</span>
            </div>
            <div class="h-64 relative flex justify-center">
@@ -182,7 +182,7 @@
       </div>
       <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
         <table class="w-full text-left text-sm">
-            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Fecha</th><th class="p-4">Evaluado</th><th class="p-4">Resultado</th><th class="p-4">PDF</th></tr></thead>
+            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Fecha</th><th class="p-4">Evaluado</th><th class="p-4">Calificación (1-5)</th><th class="p-4">PDF</th></tr></thead>
             <tbody id="report-body" class="divide-y"><tr><td colspan="4" class="p-8 text-center text-gray-400 italic">Cargando registros...</td></tr></tbody>
         </table>
       </div>
@@ -283,8 +283,16 @@
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FECHA_EVALUACION}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{COMPANIA}}</span></div>
 
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">NUEVAS VARIABLES</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{ANTECEDENTES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FELICITACIONES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{RELACION}}</span></div>
+            
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Comentarios</p>
-            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{COMPROMISOS}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{FORTALEZAS}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{OPORTUNIDADES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{COMPROMISO_OPORTUNIDADES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{SUGERENCIAS}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{CONCEPTO_JEFE}}</span></div>
 
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Preguntas (1-20)</p>
@@ -510,10 +518,10 @@
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Excelente', 'Bueno', 'Deficiente'],
+                    labels: ['5 - Excelente', '4 - Muy Bueno', '3 - Bueno', '2 - Regular', '1 - Deficiente'],
                     datasets: [{
-                        data: [dash.excelentes, dash.buenos, dash.deficientes],
-                        backgroundColor: ['#10b981', '#3b82f6', '#ef4444'],
+                        data: [dash.c5 || 0, dash.c4 || 0, dash.c3 || 0, dash.c2 || 0, dash.c1 || 0],
+                        backgroundColor: ['#15803d', '#4ade80', '#3b82f6', '#f59e0b', '#ef4444'],
                         borderWidth: 0
                     }]
                 },
@@ -685,13 +693,25 @@
       google.script.run.withSuccessHandler(rows => {
          reportData = rows;
          const html = rows.map((r, index) => {
+           let colorClass = 'text-blue-600 bg-blue-50';
+           const val = parseInt(r.resultado);
+           
+           if(val === 5) colorClass = 'text-green-800 bg-green-100';
+           else if(val === 4) colorClass = 'text-green-600 bg-green-50';
+           else if(val === 3) colorClass = 'text-blue-600 bg-blue-50';
+           else if(val === 2) colorClass = 'text-yellow-600 bg-yellow-50';
+           else if(val === 1) colorClass = 'text-red-600 bg-red-50';
+           // Fallback for old data
+           else if(r.resultado === 'E') colorClass = 'text-green-800 bg-green-100';
+           else if(r.resultado === 'D') colorClass = 'text-red-600 bg-red-50';
+           
            const mainRow = `
              <tr class="hover:bg-gray-50 transition border-b group">
                <td class="p-4 text-gray-600">${r.fecha}</td>
                <td class="p-4 font-bold text-gray-800">${r.nombre}</td>
                <td class="p-4">
-                 <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${r.resultado === 'E' ? 'text-green-600 bg-green-50' : (r.resultado === 'D' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50')}">
-                   ${r.resultado === 'E' ? 'Excelente' : (r.resultado === 'D' ? 'Deficiente' : 'Bueno')}
+                 <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${colorClass}">
+                   ${r.resultado} / 5
                  </span>
                </td>
                <td class="p-4">
