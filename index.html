@@ -473,27 +473,86 @@
 
     function closeFormModal() { document.getElementById('modal-form-embed').classList.add('hidden'); document.getElementById('gform-frame').src = 'about:blank'; }
 
+    // --- SECCIÓN MIS EVALUACIONES ACTUALIZADA CON VISTA PREVIA ---
     function cargarReportes() {
       const i = document.getElementById('report-start').value, f = document.getElementById('report-end').value;
       if(!i || !f || typeof google === 'undefined') return;
       document.getElementById('report-body').innerHTML = '<tr><td colspan="4" class="p-8 text-center animate-pulse">Cargando...</td></tr>';
+      
       google.script.run.withSuccessHandler(rows => {
          reportData = rows;
-         const html = rows.map(r => `<tr class="hover:bg-gray-50 transition border-b"><td class="p-4 text-gray-600">${r.fecha}</td><td class="p-4 font-bold text-gray-800">${r.nombre}</td><td class="p-4"><span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${r.resultado === 'E' ? 'text-green-600 bg-green-50' : (r.resultado === 'D' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50')}">${r.resultado === 'E' ? 'Excelente' : (r.resultado === 'D' ? 'Deficiente' : 'Bueno')}</span></td><td class="p-4"><a href="${r.link}" target="_blank" class="text-[#c1272d] font-bold text-xs uppercase hover:underline flex items-center gap-1"><span class="material-icons text-sm">picture_as_pdf</span> PDF</a></td></tr>`).join('');
+         const html = rows.map((r, index) => {
+           // Fila Principal con Botón de Acción
+           const mainRow = `
+             <tr class="hover:bg-gray-50 transition border-b group">
+               <td class="p-4 text-gray-600">${r.fecha}</td>
+               <td class="p-4 font-bold text-gray-800">${r.nombre}</td>
+               <td class="p-4">
+                 <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${r.resultado === 'E' ? 'text-green-600 bg-green-50' : (r.resultado === 'D' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50')}">
+                   ${r.resultado === 'E' ? 'Excelente' : (r.resultado === 'D' ? 'Deficiente' : 'Bueno')}
+                 </span>
+               </td>
+               <td class="p-4">
+                 <button onclick="togglePdf(${index}, '${r.embedLink}')" class="text-[#c1272d] font-bold text-xs uppercase hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors border border-transparent hover:border-red-100">
+                   <span class="material-icons text-sm">visibility</span> Ver PDF
+                 </button>
+               </td>
+             </tr>
+           `;
+           
+           // Fila Oculta (Acordeón) para el PDF
+           const hiddenRow = `
+             <tr id="pdf-row-${index}" class="hidden bg-gray-50 border-b">
+               <td colspan="4" class="p-4">
+                 <div class="bg-white rounded-xl border shadow-inner overflow-hidden relative" style="height: 600px;">
+                    <div id="loader-${index}" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+                      <div class="flex flex-col items-center">
+                        <span class="material-icons animate-spin text-gray-400 mb-2">sync</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Cargando Documento...</span>
+                      </div>
+                    </div>
+                    <iframe id="frame-${index}" class="w-full h-full border-0" onload="document.getElementById('loader-${index}').classList.add('hidden')"></iframe>
+                 </div>
+               </td>
+             </tr>
+           `;
+           return mainRow + hiddenRow;
+         }).join('');
+         
          document.getElementById('report-body').innerHTML = html || '<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
       }).getReportData(i, f);
     }
 
+    function togglePdf(index, url) {
+      const row = document.getElementById(`pdf-row-${index}`);
+      const frame = document.getElementById(`frame-${index}`);
+      
+      // Cerrar otros abiertos (Opcional, para mantener limpieza)
+      document.querySelectorAll('tr[id^="pdf-row-"]').forEach(r => {
+        if(r.id !== `pdf-row-${index}`) r.classList.add('hidden');
+      });
+
+      if (row.classList.contains('hidden')) {
+        row.classList.remove('hidden');
+        // Solo cargar el iframe si no tiene fuente asignada para ahorrar datos
+        if (!frame.src || frame.src === 'about:blank' || frame.src === '') {
+           frame.src = url;
+        }
+      } else {
+        row.classList.add('hidden');
+      }
+    }
+
     function descargarCSV() {
       if(!reportData.length) return Swal.fire('Info', 'No hay datos', 'info');
-      let csv = "FECHA,NOMBRE,CEDULA,RESULTADO,PDF\n";
+      let csv = "FECHA,NOMBRE,CEDULA,RESULTADO,PDF_LINK\n";
       reportData.forEach(r => csv += `${r.fecha},${r.nombre},${r.cedula},${r.resultado},${r.link}\n`);
       const blob = new Blob([csv], {type:'text/csv'});
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'reporte_g4s.csv'; a.click();
     }
 
-    // --- FUNCIONES ACTUALIZADAS DE USUARIOS ---
+    // --- FUNCIONES USUARIOS ---
     function loadUsers() {
       if(typeof google === 'undefined') return;
       
@@ -587,11 +646,10 @@
       }); 
     }
 
-    // --- FUNCIONES MEJORADAS DEL EDITOR DE PREGUNTAS (CON SPINNERS Y SKELETONS) ---
+    // --- FUNCIONES EDITOR DE PREGUNTAS ---
     function loadQuestions() { 
       if(typeof google === 'undefined') return; 
       
-      // Skeleton para Preguntas
       const skeletonCard = `
       <div class="bg-white p-4 rounded-xl border shadow-sm space-y-3">
          <div class="skeleton-row w-3/4 h-4"></div>
