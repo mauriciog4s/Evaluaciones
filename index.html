@@ -39,7 +39,7 @@
     .hidden { display: none !important; }
     
     .glass-overlay {
-      background: rgba(15, 23, 42, 0.3);
+      background: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       transition: all 0.4s ease;
@@ -81,6 +81,7 @@
         <p class="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Administración</p>
         <div onclick="nav('usuarios')" class="nav-item hidden" id="m-usuarios"><span class="material-icons mr-3">people</span> Usuarios</div>
         <div onclick="nav('formulario')" class="nav-item hidden" id="m-formulario"><span class="material-icons mr-3">edit_note</span> Formulario</div>
+        <div onclick="nav('form-update')" class="nav-item hidden" id="m-form-update"><span class="material-icons mr-3">manage_accounts</span> Form. Actualización</div>
         <div onclick="nav('plantilla')" class="nav-item hidden" id="m-plantilla"><span class="material-icons mr-3">description</span> Plantilla</div>
       </div>
     </nav>
@@ -158,13 +159,19 @@
                <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Cédula</small><span id="card-cedula" class="font-bold text-sm">-</span></div>
                <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Sucursal</small><span id="card-sucursal" class="font-bold text-sm">-</span></div>
              </div>
-             <button onclick="abrirFormulario()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span></button>
+             
+             <!-- Contenedor de Acciones (Botón o Alerta) -->
+             <div id="action-container">
+               <button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span></button>
+             </div>
+
            </div>
            <div class="text-center pb-6"><button onclick="resetSearch()" class="text-xs text-gray-400 font-bold hover:text-black">NUEVA BÚSQUEDA</button></div>
         </div>
       </div>
     </section>
 
+    <!-- ... (El resto de las secciones se mantienen igual: mis-evaluaciones, usuarios, formulario, update, plantilla, modals) ... -->
     <section id="sec-mis-evaluaciones" class="hidden">
       <h2 class="text-2xl font-black mb-6 uppercase">Mis Evaluaciones</h2>
       <div class="bg-white p-4 rounded-xl border mb-6 flex gap-4 flex-wrap items-end shadow-sm">
@@ -224,6 +231,25 @@
       </div>
     </section>
 
+    <section id="sec-form-update" class="hidden">
+      <h2 class="text-2xl font-black mb-6 uppercase">Editor: Formulario Actualización</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4" id="update-questions-list">
+          <!-- Lista de preguntas de actualización -->
+        </div>
+        <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
+           <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
+           <button onclick="addUpdateQuestion()" class="w-full py-3 bg-[#c1272d] hover:bg-[#a01b20] transition text-white rounded-lg font-bold text-sm mb-4 flex justify-center gap-2 items-center">
+             <span class="material-icons text-sm">add_circle</span> Agregar Campo Texto
+           </button>
+           <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+             <p class="text-[10px] text-yellow-600 mb-2 font-bold uppercase">Advertencia:</p>
+             <p class="text-xs text-yellow-800 leading-relaxed">Estás editando el formulario de Habeas Data y Contacto. Agrega solo campos de texto necesarios.</p>
+           </div>
+        </div>
+      </div>
+    </section>
+
     <section id="sec-plantilla" class="hidden">
       <h2 class="text-2xl font-black mb-6 uppercase">Gestión de Plantilla</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -271,6 +297,66 @@
 
   </div>
 
+  <!-- MODALS -->
+  <div id="modal-update-data" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
+    <div class="bg-white rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden relative animate__animated animate__fadeInUp">
+        
+        <div class="bg-[#231f20] p-5 border-b border-gray-800 flex justify-between items-center z-20 shrink-0">
+            <div>
+              <h3 class="font-black text-white uppercase tracking-widest text-lg flex items-center gap-2">
+                <span class="material-icons text-[#c1272d]">verified_user</span> Actualización de Datos
+              </h3>
+              <p class="text-xs text-gray-400 mt-1">Política de Privacidad y Habeas Data G4S</p>
+            </div>
+            <button onclick="closeUpdateModal()" class="text-gray-400 hover:text-white transition"><span class="material-icons">close</span></button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row flex-grow overflow-hidden">
+            
+            <div class="w-full lg:w-1/3 bg-gray-50 p-6 overflow-y-auto border-r border-gray-200">
+               <div class="mb-6">
+                 <h4 class="font-bold text-gray-800 uppercase text-xs mb-3 border-b pb-2">Aviso Legal</h4>
+                 <p class="text-xs text-gray-600 text-justify leading-relaxed">
+                   "Conozco la <strong>Ley de Habeas Data vigente</strong>, la cual, reconoce el derecho de todas las personas a conocer, actualizar y rectificar la información que suministren a bases de datos susceptibles de tratamiento.
+                 </p>
+                 <p class="text-xs text-gray-600 text-justify leading-relaxed mt-2">
+                   Conozco a su vez la Política de Habeas data de G4S, en donde se indican los canales para ejercer mis derechos y por lo tanto <strong>autorizo la recopilación y actualización</strong> que con este formulario se efectúa."
+                 </p>
+               </div>
+
+               <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                  <div class="flex items-start gap-2">
+                    <span class="material-icons text-yellow-600 text-sm mt-0.5">info</span>
+                    <div>
+                      <h5 class="font-bold text-yellow-800 text-[10px] uppercase">Requisito Obligatorio</h5>
+                      <p class="text-[10px] text-yellow-700 leading-tight mt-1">
+                        Debe completar el formulario adjunto para desbloquear el acceso a la evaluación de desempeño.
+                      </p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            <div class="w-full lg:w-2/3 bg-white relative flex flex-col">
+               <div id="loader-update" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                 <span class="material-icons animate-spin text-gray-300">sync</span>
+               </div>
+               
+               <iframe id="frame-update" class="w-full flex-grow border-0" onload="handleIframeLoad()"></iframe>
+               
+               <div class="p-4 border-t bg-gray-50 flex justify-between items-center shrink-0">
+                 <span class="text-[10px] text-gray-400 uppercase font-bold">Paso 1 de 2</span>
+                 
+                 <button id="btn-continue-update" onclick="abrirFormularioEvaluacionReal()" disabled 
+                    class="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-lg font-bold uppercase text-xs shadow-none flex items-center gap-2 transition-all">
+                   <span class="material-icons text-sm">lock</span> Complete el formulario...
+                 </button>
+               </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
   <div id="modal-form-embed" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
     <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
         <div class="bg-white p-4 border-b flex justify-between items-center z-20"><h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3><button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button></div>
@@ -278,7 +364,25 @@
     </div>
   </div>
 
+  <!-- PDF PREVIEW MODAL FOR EXISTING EVAL -->
+  <div id="modal-pdf-preview" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[4000] p-4">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
+        <div class="bg-white p-4 border-b flex justify-between items-center z-20">
+          <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+            <span class="material-icons text-[#c1272d]">picture_as_pdf</span> Reporte de Evaluación
+          </h3>
+          <button onclick="document.getElementById('modal-pdf-preview').classList.add('hidden')" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="flex-grow overflow-hidden relative bg-gray-50">
+          <iframe id="pdf-preview-frame" src="" class="w-full h-full border-0"></iframe>
+        </div>
+    </div>
+  </div>
+
   <div id="modal-user" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[2000] p-4">
+    <!-- ... (El contenido de este modal se mantiene igual) ... -->
     <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all">
       <div class="flex items-center gap-3 mb-6">
         <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
@@ -336,18 +440,20 @@
     let usersList = [];
     let reportData = [];
     let myChart = null;
+    let updateFormLoads = 0; 
 
+    // ... (Mantener aplicarPermisos, initApp, renderDashboard, nav, toggleMenu, logout) ...
     function aplicarPermisos(role) {
       const permissions = {
-        'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-plantilla', 'admin-menu'],
+        'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
         'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
-        'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-plantilla', 'admin-menu'],
+        'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
         'Usuario': ['m-mis-evaluaciones']
       };
 
       const myPermissions = permissions[role] || ['m-mis-evaluaciones']; 
       
-      const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-plantilla', 'admin-menu'];
+      const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
       allItems.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -425,6 +531,7 @@
       if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
       if(id === 'usuarios') loadUsers();
       if(id === 'formulario') loadQuestions();
+      if(id === 'form-update') loadUpdateQuestions();
       if(id === 'mis-evaluaciones') {
           const date = new Date();
           const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
@@ -438,6 +545,7 @@
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
     function logout() { window.top.location.href = "https://accounts.google.com/Logout"; }
 
+    // --- MODIFICADO: FUNCIÓN BUSCAR CON LÓGICA DE BLOQUEO ---
     function buscarEmpleado() {
       const cedula = document.getElementById('input-cedula').value;
       if(!cedula || typeof google === 'undefined') return;
@@ -445,9 +553,12 @@
       const originalText = btn.innerText;
       btn.innerHTML = '<span class="material-icons animate-spin text-sm mr-2">sync</span>';
       btn.disabled = true;
+      
       google.script.run.withSuccessHandler(res => {
          btn.innerHTML = originalText; btn.disabled = false;
+         
          if(!res.found) return Swal.fire('No encontrado', 'Cédula no existe', 'warning');
+         
          currentEmployee = res.data;
          document.getElementById('card-nombre').innerText = res.data.nombre;
          document.getElementById('card-cargo').innerText = res.data.cargo;
@@ -455,12 +566,104 @@
          document.getElementById('card-sucursal').innerText = res.data.sucursal;
          document.getElementById('search-box').classList.add('hidden');
          document.getElementById('result-card').classList.remove('hidden');
+
+         // --- LÓGICA SEMÁFORO ---
+         const container = document.getElementById('action-container');
+         
+         if (res.existingEvaluation && res.existingEvaluation.exists) {
+            // MOSTRAR ADVERTENCIA
+            const ev = res.existingEvaluation;
+            container.innerHTML = `
+              <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                  <span class="material-icons text-red-600 mt-1">warning</span>
+                  <div>
+                    <h4 class="font-bold text-red-800 text-sm uppercase">Ya evaluado en ${ev.year}</h4>
+                    <p class="text-xs text-red-700 mt-1">Este colaborador ya tiene un registro.</p>
+                    
+                    <div class="mt-3 text-xs bg-white p-3 rounded border border-red-100">
+                      <p><strong>Fecha:</strong> ${ev.fecha}</p>
+                      <p><strong>Evaluador:</strong> ${ev.evaluador}</p>
+                      <p><strong>Resultado:</strong> ${ev.resultado}</p>
+                    </div>
+
+                    <button onclick="verPdfExistente('${ev.pdfLink}')" class="mt-3 w-full bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-700 flex items-center justify-center gap-2">
+                      <span class="material-icons text-sm">picture_as_pdf</span> Ver Reporte
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+         } else {
+            // MOSTRAR BOTÓN NORMAL
+            container.innerHTML = `
+              <button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2">
+                <span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span>
+              </button>
+            `;
+         }
+
       }).buscarEmpleado(cedula);
     }
 
-    function resetSearch() { currentEmployee = null; document.getElementById('result-card').classList.add('hidden'); document.getElementById('search-box').classList.remove('hidden'); document.getElementById('input-cedula').value = ''; }
+    function verPdfExistente(url) {
+      document.getElementById('pdf-preview-frame').src = url;
+      document.getElementById('modal-pdf-preview').classList.remove('hidden');
+      document.getElementById('modal-pdf-preview').classList.add('flex');
+    }
 
-    function abrirFormulario() {
+    function resetSearch() { 
+        currentEmployee = null; 
+        document.getElementById('result-card').classList.add('hidden'); 
+        document.getElementById('search-box').classList.remove('hidden'); 
+        document.getElementById('input-cedula').value = ''; 
+        // Limpiar contenedor de acción
+        document.getElementById('action-container').innerHTML = '';
+    }
+
+    // --- (Resto de funciones: iniciarProcesoEvaluacion, handleIframeLoad, etc. se mantienen igual) ---
+    function iniciarProcesoEvaluacion() {
+      if(!currentEmployee) return;
+      updateFormLoads = 0;
+      const btn = document.getElementById('btn-continue-update');
+      btn.disabled = true;
+      btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+      btn.classList.remove('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
+      btn.innerHTML = '<span class="material-icons text-sm">lock</span> Complete el formulario...';
+
+      let urlUpdate = appData.updateUrlBase
+          .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
+          .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre));
+
+      if(!urlUpdate.includes('embedded=true')) urlUpdate += '&embedded=true';
+
+      document.getElementById('loader-update').classList.remove('hidden');
+      document.getElementById('frame-update').src = urlUpdate;
+      
+      const modal = document.getElementById('modal-update-data');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    
+    function handleIframeLoad() {
+      document.getElementById('loader-update').classList.add('hidden');
+      updateFormLoads++;
+      if (updateFormLoads > 1) {
+         const btn = document.getElementById('btn-continue-update');
+         btn.disabled = false;
+         btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'shadow-none');
+         btn.classList.add('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
+         btn.innerHTML = 'CONTINUAR A EVALUACIÓN <span class="material-icons text-sm">arrow_forward</span>';
+      }
+    }
+
+    function closeUpdateModal() {
+      document.getElementById('modal-update-data').classList.add('hidden');
+      document.getElementById('frame-update').src = 'about:blank';
+    }
+
+    function abrirFormularioEvaluacionReal() {
+      closeUpdateModal();
       if(!currentEmployee) return;
       let url = appData.formUrlBase.replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre)).replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula)).replace('{{CARGO}}', encodeURIComponent(currentEmployee.cargo)).replace('{{EMAIL}}', encodeURIComponent(currentEmployee.email));
       if(!url.includes('embedded=true')) url += '&embedded=true';
@@ -473,7 +676,7 @@
 
     function closeFormModal() { document.getElementById('modal-form-embed').classList.add('hidden'); document.getElementById('gform-frame').src = 'about:blank'; }
 
-    // --- SECCIÓN MIS EVALUACIONES ACTUALIZADA CON VISTA PREVIA ---
+    // --- (Resto de funciones sin cambios: cargarReportes, togglePdf, descargarCSV, etc.) ---
     function cargarReportes() {
       const i = document.getElementById('report-start').value, f = document.getElementById('report-end').value;
       if(!i || !f || typeof google === 'undefined') return;
@@ -482,7 +685,6 @@
       google.script.run.withSuccessHandler(rows => {
          reportData = rows;
          const html = rows.map((r, index) => {
-           // Fila Principal con Botón de Acción
            const mainRow = `
              <tr class="hover:bg-gray-50 transition border-b group">
                <td class="p-4 text-gray-600">${r.fecha}</td>
@@ -499,8 +701,6 @@
                </td>
              </tr>
            `;
-           
-           // Fila Oculta (Acordeón) para el PDF
            const hiddenRow = `
              <tr id="pdf-row-${index}" class="hidden bg-gray-50 border-b">
                <td colspan="4" class="p-4">
@@ -518,7 +718,6 @@
            `;
            return mainRow + hiddenRow;
          }).join('');
-         
          document.getElementById('report-body').innerHTML = html || '<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
       }).getReportData(i, f);
     }
@@ -526,23 +725,9 @@
     function togglePdf(index, url) {
       const row = document.getElementById(`pdf-row-${index}`);
       const frame = document.getElementById(`frame-${index}`);
-      
-      // Cerrar otros abiertos (Opcional, para mantener limpieza)
-      document.querySelectorAll('tr[id^="pdf-row-"]').forEach(r => {
-        if(r.id !== `pdf-row-${index}`) r.classList.add('hidden');
-      });
-
-      if (row.classList.contains('hidden')) {
-        row.classList.remove('hidden');
-        // Solo cargar el iframe si no tiene fuente asignada para ahorrar datos
-        if (!frame.src || frame.src === 'about:blank' || frame.src === '') {
-           frame.src = url;
-        }
-      } else {
-        row.classList.add('hidden');
-      }
+      document.querySelectorAll('tr[id^="pdf-row-"]').forEach(r => { if(r.id !== `pdf-row-${index}`) r.classList.add('hidden'); });
+      if (row.classList.contains('hidden')) { row.classList.remove('hidden'); if (!frame.src || frame.src === 'about:blank' || frame.src === '') { frame.src = url; } } else { row.classList.add('hidden'); }
     }
-
     function descargarCSV() {
       if(!reportData.length) return Swal.fire('Info', 'No hay datos', 'info');
       let csv = "FECHA,NOMBRE,CEDULA,RESULTADO,PDF_LINK\n";
@@ -551,14 +736,11 @@
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'reporte_g4s.csv'; a.click();
     }
-
-    // --- FUNCIONES USUARIOS ---
+    // --- (Funciones de usuarios y editor se mantienen igual) ---
     function loadUsers() {
       if(typeof google === 'undefined') return;
-      
       const skeletonHtml = `<tr>${'<td class="p-4"><div class="skeleton-row w-full"></div></td>'.repeat(5)}</tr>`.repeat(3);
       document.getElementById('users-body').innerHTML = skeletonHtml;
-
       google.script.run.withSuccessHandler(users => {
          usersList = users;
          const html = users.map(u => `
@@ -566,191 +748,37 @@
               <td class="p-4 font-bold text-gray-700">${u.nombre}</td>
               <td class="p-4 text-xs text-gray-500">${u.correo}</td>
               <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
-              <td class="p-4">
-                <span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
-                  ${u.estado}
-                </span>
-              </td>
-              <td class="p-4">
-                <div class="flex gap-1">
-                  <button onclick="editUser(${u.row})" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><span class="material-icons text-sm">edit</span></button>
-                  <button onclick="deleteUser(${u.row})" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"><span class="material-icons text-sm">delete</span></button>
-                </div>
-              </td>
+              <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td>
+              <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"><span class="material-icons text-sm">delete</span></button></div></td>
             </tr>`).join('');
          document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No hay usuarios registrados.</td></tr>';
       }).getUsersData();
     }
-
     function modalUsuario(action, row = null) {
       const modal = document.getElementById('modal-user');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      
-      document.getElementById('u-action').value = action;
-      document.getElementById('u-row').value = row || '';
-      document.getElementById('form-user').reset();
-      
-      const btn = document.getElementById('btn-save-user');
-      const loader = document.getElementById('btn-save-loader');
-      const btnText = document.getElementById('btn-save-text');
-      btn.disabled = false;
-      btn.classList.remove('opacity-70');
-      loader.classList.add('hidden');
-      btnText.innerText = 'Guardar';
-
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      document.getElementById('u-action').value = action; document.getElementById('u-row').value = row || ''; document.getElementById('form-user').reset();
+      const btn = document.getElementById('btn-save-user'); const loader = document.getElementById('btn-save-loader'); const btnText = document.getElementById('btn-save-text');
+      btn.disabled = false; btn.classList.remove('opacity-70'); loader.classList.add('hidden'); btnText.innerText = 'Guardar';
       document.getElementById('modal-user-title').innerText = action === 'CREATE' ? 'Nuevo Usuario' : 'Editar Usuario';
-
-      if(action === 'UPDATE' && row) {
-        const u = usersList.find(x => x.row === row);
-        if(u) {
-          document.getElementById('u-nombre').value = u.nombre;
-          document.getElementById('u-correo').value = u.correo;
-          document.getElementById('u-rol').value = u.rol;
-          document.getElementById('u-estado').value = u.estado;
-        }
-      }
+      if(action === 'UPDATE' && row) { const u = usersList.find(x => x.row === row); if(u) { document.getElementById('u-nombre').value = u.nombre; document.getElementById('u-correo').value = u.correo; document.getElementById('u-rol').value = u.rol; document.getElementById('u-estado').value = u.estado; } }
     }
-    
     function editUser(row) { modalUsuario('UPDATE', row); }
-
     function saveUser(e) { 
-      e.preventDefault(); 
-      if(typeof google === 'undefined') return; 
-
-      const btn = document.getElementById('btn-save-user');
-      const loader = document.getElementById('btn-save-loader');
-      const btnText = document.getElementById('btn-save-text');
-
-      btn.disabled = true;
-      btn.classList.add('opacity-70');
-      loader.classList.remove('hidden');
-      btnText.innerText = 'Procesando...';
-
-      google.script.run.withSuccessHandler(() => { 
-        document.getElementById('modal-user').classList.add('hidden'); 
-        loadUsers(); 
-        Swal.fire('Guardado', '', 'success'); 
-      }).saveUser(document.getElementById('u-action').value, {
-        row: document.getElementById('u-row').value, 
-        nombre: document.getElementById('u-nombre').value, 
-        correo: document.getElementById('u-correo').value, 
-        rol: document.getElementById('u-rol').value, 
-        estado: document.getElementById('u-estado').value
-      }); 
+      e.preventDefault(); if(typeof google === 'undefined') return; 
+      const btn = document.getElementById('btn-save-user'); const loader = document.getElementById('btn-save-loader'); const btnText = document.getElementById('btn-save-text');
+      btn.disabled = true; btn.classList.add('opacity-70'); loader.classList.remove('hidden'); btnText.innerText = 'Procesando...';
+      google.script.run.withSuccessHandler(() => { document.getElementById('modal-user').classList.add('hidden'); loadUsers(); Swal.fire('Guardado', '', 'success'); }).saveUser(document.getElementById('u-action').value, { row: document.getElementById('u-row').value, nombre: document.getElementById('u-nombre').value, correo: document.getElementById('u-correo').value, rol: document.getElementById('u-rol').value, estado: document.getElementById('u-estado').value }); 
     }
-
-    function deleteUser(row) { 
-      Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d'}).then(r => { 
-        if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); 
-      }); 
-    }
-
-    // --- FUNCIONES EDITOR DE PREGUNTAS ---
-    function loadQuestions() { 
-      if(typeof google === 'undefined') return; 
-      
-      const skeletonCard = `
-      <div class="bg-white p-4 rounded-xl border shadow-sm space-y-3">
-         <div class="skeleton-row w-3/4 h-4"></div>
-         <div class="flex justify-end gap-2">
-            <div class="skeleton-row w-8 h-8 rounded"></div>
-            <div class="skeleton-row w-8 h-8 rounded"></div>
-         </div>
-      </div>`;
-      document.getElementById('questions-list').innerHTML = skeletonCard.repeat(3);
-
-      google.script.run.withSuccessHandler(list => { 
-        const html = list.map(q => `
-          <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition">
-            <div class="flex items-center gap-3">
-               <span class="material-icons text-gray-300 text-sm">drag_indicator</span>
-               <span class="font-bold text-gray-800 text-sm">${q.title}</span>
-            </div>
-            <div class="flex gap-2">
-               <button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button>
-               <button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button>
-            </div>
-          </div>`).join(''); 
-        document.getElementById('questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay preguntas configuradas.</p>'; 
-      }).getFormStructure(); 
-    }
-
-    function addQuestion() { 
-      Swal.fire({ 
-        title: 'Nueva Pregunta', 
-        input: 'text', 
-        inputPlaceholder: 'Escriba la pregunta aquí...',
-        showCancelButton: true,
-        confirmButtonColor: '#231f20',
-        cancelButtonText: 'Cancelar',
-        confirmButtonText: 'Guardar'
-      }).then(r => { 
-        if(r.isConfirmed && r.value) {
-            Swal.fire({
-                title: 'Guardando en Forms...',
-                text: 'Por favor espere',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-            google.script.run.withSuccessHandler(() => {
-                Swal.close();
-                loadQuestions();
-                Swal.fire({icon: 'success', title: 'Agregada', timer: 1500, showConfirmButton: false});
-            }).modifyFormQuestion('ADD', {title: r.value}); 
-        }
-      }); 
-    }
-
-    function delQuestion(id) { 
-      Swal.fire({
-        title: '¿Eliminar Pregunta?', 
-        text: "Esta acción borrará la pregunta del formulario oficial.",
-        icon:'warning', 
-        showCancelButton:true,
-        confirmButtonColor: '#c1272d',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      }).then(r => { 
-        if(r.isConfirmed) {
-            Swal.fire({
-                title: 'Eliminando...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-            google.script.run.withSuccessHandler(() => {
-                Swal.close();
-                loadQuestions();
-                Swal.fire({icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false});
-            }).modifyFormQuestion('DELETE', {id: id}); 
-        }
-      }); 
-    }
-
-    function editQuestion(id, currentTitle) { 
-      Swal.fire({ 
-        title: 'Editar Pregunta', 
-        input: 'text', 
-        inputValue: currentTitle, 
-        showCancelButton: true,
-        confirmButtonColor: '#231f20',
-        confirmButtonText: 'Actualizar'
-      }).then(r => { 
-        if(r.isConfirmed && r.value) {
-            Swal.fire({
-                title: 'Actualizando...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-            google.script.run.withSuccessHandler(() => {
-                Swal.close();
-                loadQuestions();
-                Swal.fire({icon: 'success', title: 'Actualizada', timer: 1500, showConfirmButton: false});
-            }).modifyFormQuestion('UPDATE', {id: id, title: r.value}); 
-        }
-      }); 
-    }
-
+    function deleteUser(row) { Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d'}).then(r => { if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); }); }
+    function loadQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">drag_indicator</span><span class="font-bold text-gray-800 text-sm">${q.title}</span></div><div class="flex gap-2"><button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay preguntas configuradas.</p>'; }).getFormStructure(); }
+    function addQuestion() { Swal.fire({ title: 'Nueva Pregunta (Evaluación)', input: 'text', inputPlaceholder: 'Escriba la pregunta aquí...', showCancelButton: true, confirmButtonColor: '#231f20', cancelButtonText: 'Cancelar', confirmButtonText: 'Guardar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Guardando en Forms...', text: 'Por favor espere', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Agregada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('ADD', {title: r.value}); } }); }
+    function delQuestion(id) { Swal.fire({ title: '¿Eliminar Pregunta?', text: "Esta acción borrará la pregunta del formulario oficial.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('DELETE', {id: id}); } }); }
+    function editQuestion(id, currentTitle) { Swal.fire({ title: 'Editar Pregunta', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#231f20', confirmButtonText: 'Actualizar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Actualizada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('UPDATE', {id: id, title: r.value}); } }); }
+    function loadUpdateQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('update-questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { if (list.length > 0 && list[0].id === 0) { document.getElementById('update-questions-list').innerHTML = `<p class="text-red-500 font-bold text-center p-4">${list[0].title}</p>`; return; } const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">short_text</span><div><span class="font-bold text-gray-800 text-sm block">${q.title}</span><span class="text-[10px] text-gray-400 uppercase font-bold">${q.type}</span></div></div><div class="flex gap-2"><button onclick="editUpdateQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delUpdateQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('update-questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay campos configurados.</p>'; }).getUpdateFormStructure(); }
+    function addUpdateQuestion() { Swal.fire({ title: 'Nuevo Campo de Texto', input: 'text', inputPlaceholder: 'Ej: Teléfono de Emergencia', showCancelButton: true, confirmButtonColor: '#c1272d', cancelButtonText: 'Cancelar', confirmButtonText: 'Agregar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Agregando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Campo Agregado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('ADD', {title: r.value}); } }); }
+    function delUpdateQuestion(id) { Swal.fire({ title: '¿Eliminar Campo?', text: "Se borrará este campo del formulario de actualización.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Eliminado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('DELETE', {id: id}); } }); }
+    function editUpdateQuestion(id, currentTitle) { Swal.fire({ title: 'Editar Título del Campo', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#c1272d', confirmButtonText: 'Actualizar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('UPDATE', {id: id, title: r.value}); } }); }
     function abrirPlantillaDocs() { if(appData && appData.templateUrl) window.open(appData.templateUrl, '_blank'); }
   </script>
 </body>
