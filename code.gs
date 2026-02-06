@@ -1,6 +1,6 @@
 /**
  * 📘 PORTAL DE EVALUACIÓN DE DESEMPEÑO G4S - BACKEND PRO
- * Versión: 9.0 (Control de Roles por Matriz de Permisos)
+ * Versión: 10.0 (Regla de Negocio: 1 Evaluación por Año)
  */
 
 const CONFIG = {
@@ -10,14 +10,19 @@ const CONFIG = {
     EVALUACIONES: '1WuIyPUYGzKTlmSQ8oGUTdOu4Tm-JrpUNDYksJzHjweA',
     PLANTILLA_DOC: '1gvD5arbSG66iUMimEnvvYNI3tjzm7Al18VUJw_fA5Rk',
     CARPETA_PDF: '16U-cJ4f5tjk3WkgxOVx9FjkNTa6se-lT', 
-    FORM_ID: '1JiZqopdMJr6wwMF3PjGTCBWhtTymEKUOqGtSNQgNiz4' 
+    FORM_ID: '1JiZqopdMJr6wwMF3PjGTCBWhtTymEKUOqGtSNQgNiz4',
+    UPDATE_FORM_ID: '13Q8Ol0KB7pkOrR7Lp9riS-22z_kXwHPVjn8CdbhWOOo' 
   },
   URLS: {
     FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLScR_G2zrIrLXXWljYsWmSF5KZn1HEyUddsGxvfLD73QF3TePQ/viewform?usp=pp_url' 
                + '&entry.728137919={{NOMBRE}}'
                + '&entry.78461664={{CEDULA}}'
                + '&entry.1528887472={{CARGO}}'
-               + '&entry.38546215={{EMAIL}}'
+               + '&entry.38546215={{EMAIL}}',
+
+    UPDATE_FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLSf6XNwlX--mQwpzTExQi_hXRdu4SQfPgA706WKIA2Dcg5RF-w/viewform?usp=pp_url' 
+               + '&entry.1636369527={{CEDULA}}'
+               + '&entry.965425892={{NOMBRE}}'
   }
 };
 
@@ -30,14 +35,12 @@ function doGet(e) {
     .setFaviconUrl('https://www.g4s.com/favicon.ico');
 }
 
-// --- 1. LOGIN & SEGURIDAD ---
 function getInitData() {
   try {
     const userEmail = Session.getActiveUser().getEmail();
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.USUARIOS).getSheetByName('Usuarios');
     const data = sheet.getDataRange().getValues();
     const headers = data[0]; 
-
     const idxCorreo = headers.indexOf('Correo'); 
     const idxEstado = headers.indexOf('Estado'); 
     const idxRol = headers.indexOf('Rol'); 
@@ -52,9 +55,6 @@ function getInitData() {
     if (!usuario) return { error: true, message: 'ACCESO DENEGADO: Su usuario no tiene permisos activos.' };
 
     const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol] : 'Usuario';
-    
-    // El "UsuarioAdministrador" tiene acceso a herramientas admin, pero el logicamente 
-    // definimos isAdmin para mostrar el menu de administración en la UI.
     const isAdminUI = ['Administrador', 'UsuarioAdministrador'].includes(userRole);
 
     return { 
@@ -63,16 +63,14 @@ function getInitData() {
       role: userRole,
       isAdmin: isAdminUI,
       formUrlBase: CONFIG.URLS.FORM_BASE,
+      updateUrlBase: CONFIG.URLS.UPDATE_FORM_BASE,
       templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`,
       dashboard: getDashboardStats()
     };
-
-  } catch (err) {
-    return { error: true, message: err.message };
-  }
+  } catch (err) { return { error: true, message: err.message }; }
 }
 
-// --- 2. FUNCIONES CORE ---
+// --- MODIFICADO: BUSCAR EMPLEADO + VALIDACIÓN DE AÑO ---
 function buscarEmpleado(cedula) {
   try {
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EMPLEADOS).getSheetByName('empleados');
@@ -93,6 +91,44 @@ function buscarEmpleado(cedula) {
 
     if (!empleado) return { found: false };
 
+    // --- NUEVA LÓGICA: VERIFICAR EVALUACIÓN EN EL AÑO ACTUAL ---
+    let existingEvaluation = null;
+    try {
+      const currentYear = new Date().getFullYear();
+      const sheetEval = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
+      const dataEval = sheetEval.getDataRange().getValues();
+      const headersEval = dataEval[0];
+      
+      const iCedulaEval = headersEval.indexOf('Cedula');
+      const iFechaEval = headersEval.indexOf('Fecha de Creación'); // O la fecha que uses para validar
+      const iEvaluador = headersEval.indexOf('Evaluador');
+      const iResultado = headersEval.indexOf('Evglobal');
+      const iLink = headersEval.indexOf('LinkRepoteFinal');
+
+      // Buscar si existe evaluación este año
+      const evaluacionEncontrada = dataEval.slice(1).find(r => {
+        const cedulaEval = r[iCedulaEval].toString().trim();
+        const fechaObj = new Date(r[iFechaEval]);
+        return cedulaEval === cedulaStr && fechaObj.getFullYear() === currentYear;
+      });
+
+      if (evaluacionEncontrada) {
+        const originalLink = evaluacionEncontrada[iLink] || '#';
+        const embedLink = originalLink.replace(/\/view.*/, '/preview').replace(/\/edit.*/, '/preview');
+        
+        existingEvaluation = {
+          exists: true,
+          year: currentYear,
+          fecha: formatFecha(evaluacionEncontrada[iFechaEval]),
+          evaluador: evaluacionEncontrada[iEvaluador] || 'Sistema',
+          resultado: evaluacionEncontrada[iResultado] || '-',
+          pdfLink: embedLink,
+          originalLink: originalLink
+        };
+      }
+    } catch(err) { console.warn("Error validando duplicados: " + err.message); }
+    // -----------------------------------------------------------
+
     return {
       found: true,
       data: {
@@ -104,7 +140,8 @@ function buscarEmpleado(cedula) {
         email: empleado[map.email] || '',
         compania: (map.compania > -1 && empleado[map.compania]) ? empleado[map.compania] : 'G4S Secure Solutions',
         estado: map.estado > -1 ? empleado[map.estado] : 'Activo'
-      }
+      },
+      existingEvaluation: existingEvaluation // Enviamos el objeto al front
     };
   } catch (e) { return { error: true, message: e.message }; }
 }
@@ -226,7 +263,6 @@ function saveToSheet(datos, urlPdf) {
   sheet.appendRow(rowData);
 }
 
-// --- 3. MÓDULOS ---
 function getDashboardStats() {
   try {
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
@@ -275,25 +311,23 @@ function getReportData(inicio, fin) {
       
       const enFecha = fechaRow >= d1 && fechaRow <= d2;
       
-      // Filtro de Roles:
-      // Administrador ve todo.
-      // Otros ven solo sus evaluaciones (basado en el correo logueado).
       if (userRole === 'Administrador') return enFecha;
-      
       return enFecha && userRow === userEmail.toLowerCase();
     });
 
-    return filtrados.map(r => ({
-      fecha: formatFecha(r[iFecha]),
-      nombre: r[iNombre] || 'Desconocido',
-      cedula: r[iCedula] || '-',
-      resultado: r[iRes] || '-',
-      link: r[iLink] || '#'
-    }));
-  } catch(e) {
-    console.error("Error en Reportes: " + e.message);
-    return [];
-  }
+    return filtrados.map(r => {
+      const originalLink = r[iLink] || '#';
+      const embedLink = originalLink.replace(/\/view.*/, '/preview').replace(/\/edit.*/, '/preview');
+      return {
+        fecha: formatFecha(r[iFecha]),
+        nombre: r[iNombre] || 'Desconocido',
+        cedula: r[iCedula] || '-',
+        resultado: r[iRes] || '-',
+        link: originalLink,
+        embedLink: embedLink
+      };
+    });
+  } catch(e) { return []; }
 }
 
 function getUsersData() {
@@ -368,7 +402,39 @@ function modifyFormQuestion(action, data) {
   } catch(e) { return { error: e.message }; }
 }
 
-// --- UTILIDADES ---
+function getUpdateFormStructure() {
+  try {
+    const form = FormApp.openById(CONFIG.IDS.UPDATE_FORM_ID);
+    const items = form.getItems();
+    const fields = items
+      .filter(i => i.getType() === FormApp.ItemType.TEXT || i.getType() === FormApp.ItemType.PARAGRAPH_TEXT)
+      .map(i => ({ id: i.getId(), title: i.getTitle(), type: i.getType().name() }));
+    return fields;
+  } catch (e) { return [{id: 0, title: 'Error: Configura el UPDATE_FORM_ID en code.gs'}]; }
+}
+
+function modifyUpdateFormQuestion(action, data) {
+  try {
+    const form = FormApp.openById(CONFIG.IDS.UPDATE_FORM_ID);
+    if (action === 'ADD') {
+      const item = form.addTextItem();
+      item.setTitle(data.title).setRequired(true);
+    } 
+    else if (action === 'DELETE') {
+      const item = form.getItemById(data.id);
+      if (item) form.deleteItem(item);
+    } 
+    else if (action === 'UPDATE') {
+      const item = form.getItemById(data.id);
+      if (item) {
+        if (item.getType() === FormApp.ItemType.TEXT) item.asTextItem().setTitle(data.title);
+        if (item.getType() === FormApp.ItemType.PARAGRAPH_TEXT) item.asParagraphTextItem().setTitle(data.title);
+      }
+    }
+    return { success: true };
+  } catch(e) { return { error: e.message }; }
+}
+
 function formatFecha(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
