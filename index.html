@@ -284,6 +284,9 @@
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{COMPANIA}}</span></div>
 
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">NUEVAS VARIABLES</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{REGIONAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{LINEA_NEGOCIO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{DISPOSITIVO}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{ANTECEDENTES}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FELICITACIONES}}</span></div>
             <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{RELACION}}</span></div>
@@ -673,7 +676,18 @@
     function abrirFormularioEvaluacionReal() {
       closeUpdateModal();
       if(!currentEmployee) return;
-      let url = appData.formUrlBase.replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre)).replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula)).replace('{{CARGO}}', encodeURIComponent(currentEmployee.cargo)).replace('{{EMAIL}}', encodeURIComponent(currentEmployee.email));
+      
+      // --- AQUÍ ESTABA EL ERROR: FALTABAN LOS REEMPLAZOS ---
+      let url = appData.formUrlBase
+        .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre))
+        .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
+        .replace('{{CARGO}}', encodeURIComponent(currentEmployee.cargo))
+        .replace('{{EMAIL}}', encodeURIComponent(currentEmployee.email))
+        // NUEVOS CAMPOS:
+        .replace('{{REGIONAL}}', encodeURIComponent(currentEmployee.regional || ''))
+        .replace('{{LINEA_NEGOCIO}}', encodeURIComponent(currentEmployee.lineaNegocio || ''))
+        .replace('{{DISPOSITIVO}}', encodeURIComponent(currentEmployee.dispositivo || ''));
+
       if(!url.includes('embedded=true')) url += '&embedded=true';
       const modal = document.getElementById('modal-form-embed');
       const iframe = document.getElementById('gform-frame');
