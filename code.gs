@@ -18,8 +18,8 @@ const CONFIG = {
   },
   
   URLS: {
-    // URL DE PRE-LLENADO EXACTA DEL LOG GENERADO
-    FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLSfiIDzVan0A2pXdjUEOk9egP5Z7QLQqMoqQLAZ6ICYYqEVtqw/viewform?usp=pp_url' 
+    // URL DE PRE-LLENADO EXACTA DEL LOG GENERADO   sharing&ouid=103419194841926280329
+    FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLScfoAp19vRL66F85IDvpVyHxV8eKTJ026xzVBnabdkNU7mXYQ/viewform?usp=pp_url' 
                + '&entry.1469316023={{NOMBRE}}'
                + '&entry.394583950={{CEDULA}}'
                + '&entry.953829406={{CARGO}}'
