@@ -1,0 +1,70 @@
+/**
+ * 🛠️ GENERADOR DE FORMULARIO DE ACTUALIZACIÓN DE DATOS + HABEAS DATA
+ * Ejecuta 'crearFormularioUpdate' UNA VEZ.
+ * Mira el LOG (Ver -> Registros de ejecución) para obtener la configuración.
+ */
+
+function crearFormularioUpdate() {
+  // 1. Crear Formulario
+  const form = FormApp.create('G4S - Actualización de Datos y Habeas Data');
+  
+  form.setDescription(
+    "ACTUALIZACIÓN OBLIGATORIA DE DATOS\n\n" +
+    "Para continuar con el proceso de evaluación, es necesario confirmar la información de contacto del colaborador."
+  )
+  .setConfirmationMessage('Datos actualizados correctamente. Por favor regrese al portal y haga clic en "CONTINUAR A EVALUACIÓN".')
+  .setPublishingSummary(false)
+  .setShowLinkToRespondAgain(false);
+
+  // 2. Sección: Habeas Data (Legal)
+  const itemHabeas = form.addCheckboxItem().setTitle('Términos y Condiciones - Habeas Data').setRequired(true);
+  itemHabeas.setChoices([
+    itemHabeas.createChoice('Conozco la Ley de Habeas Data vigente, la cual, reconoce el derecho de todas las personas a conocer, actualizar y rectificar la información que suministren a bases de datos susceptibles de tratamiento. Conozco a su vez la Política de Habeas data de G4S y autorizo la recopilación de datos.')
+  ]);
+
+  // 3. Sección: Datos del Colaborador (PRE-LLENADOS)
+  form.addSectionHeaderItem().setTitle('Validación de Identidad');
+  
+  const itemCedula = form.addTextItem().setTitle('Cédula del Colaborador').setRequired(true);
+  const itemNombre = form.addTextItem().setTitle('Nombre del Colaborador').setRequired(true);
+  
+  // 4. Sección: Datos a Actualizar
+  form.addSectionHeaderItem().setTitle('Información de Contacto Actual');
+
+  form.addTextItem().setTitle('Dirección de Residencia Actual').setRequired(true)
+      .setHelpText('Indique Dirección, Barrio y Ciudad');
+
+  form.addTextItem().setTitle('Número de Celular Actual').setRequired(true);
+
+  form.addTextItem().setTitle('Correo Electrónico Personal').setRequired(true)
+      .setValidation(FormApp.createTextValidation().requireTextIsEmail().build());
+
+  // --- GENERAR URL PRE-LLENADA PARA OBTENER LOS IDs ---
+  const formResponse = form.createResponse();
+  formResponse.withItemResponse(itemCedula.createResponse("DATA_CEDULA"));
+  formResponse.withItemResponse(itemNombre.createResponse("DATA_NOMBRE"));
+  
+  const urlPrefilled = formResponse.toPrefilledUrl();
+  
+  console.log("---------------------------------------------------------");
+  console.log("✅ FORMULARIO DE ACTUALIZACIÓN CREADO");
+  console.log("🔗 URL Pública: " + form.getPublishedUrl());
+  console.log("---------------------------------------------------------");
+  console.log("⚠️ COPIA ESTOS IDs EN TU ARCHIVO Code.gs (Variable CONFIG) ⚠️");
+  
+  const idCedula = extractEntryId(urlPrefilled, "DATA_CEDULA");
+  const idNombre = extractEntryId(urlPrefilled, "DATA_NOMBRE");
+
+  console.log(`
+  UPDATE_FORM_URL: '${form.getPublishedUrl()}?usp=pp_url' 
+                   + '&entry.${idCedula}={{CEDULA}}'
+                   + '&entry.${idNombre}={{NOMBRE}}'
+  `);
+  console.log("---------------------------------------------------------");
+}
+
+function extractEntryId(url, placeholder) {
+  const regex = new RegExp(`entry\\.(\\d+)=${placeholder}`);
+  const match = url.match(regex);
+  return match ? match[1] : "NO_ENCONTRADO";
+}
