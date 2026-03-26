@@ -1,5 +1,5 @@
 /**
- * 📘 PORTAL DE EVALUACIÓN DE DESEMPEÑO G4S - BACKEND PRO (V3.1 - Conectado a Formulario V2)
+ * 📘 PORTAL DE EVALUACIÓN DE DESEMPEÑO G4S - BACKEND PRO (V3.2 - Conectado a Formulario V2)
  */
 
 const CONFIG = {
@@ -10,27 +10,25 @@ const CONFIG = {
     PLANTILLA_DOC: '1gvD5arbSG66iUMimEnvvYNI3tjzm7Al18VUJw_fA5Rk',
     CARPETA_PDF: '16U-cJ4f5tjk3WkgxOVx9FjkNTa6se-lT', 
     
-    // ID DEL NUEVO FORMULARIO (Extraído de tu link de edición)
-    FORM_ID: '1h9k_yAhqzqG5rtrw5jz2woGPbK4jXaxoyQ8ZaTaOH7Q', 
-    
-    // ID del formulario de actualización de datos (Habeas data)
-    UPDATE_FORM_ID: '13Q8Ol0KB7pkOrR7Lp9riS-22z_kXwHPVjn8CdbhWOOo' 
+    // ⚠️ IDs CON EL ID DE EDICIÓN DE FORMULARIOS ⚠️
+    FORM_ID: '1_s4iIo4AgOsMPGdpHhorgY41lm4RE00TezKkZl8KDl8', // ID Edición del Formulario de Evaluación
+    UPDATE_FORM_ID: '18RbSuIMAaYdTN14Sej8ssrlgCRbLuECpJkOYhksgPGQ' // ID Edición del Form de Actualización/Habeas Data
   },
   
   URLS: {
-    // URL DE PRE-LLENADO EXACTA DEL LOG GENERADO   sharing&ouid=103419194841926280329
-    FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLScfoAp19vRL66F85IDvpVyHxV8eKTJ026xzVBnabdkNU7mXYQ/viewform?usp=pp_url' 
-               + '&entry.1469316023={{NOMBRE}}'
-               + '&entry.394583950={{CEDULA}}'
-               + '&entry.953829406={{CARGO}}'
-               + '&entry.886040372={{EMAIL}}'
-               + '&entry.465226017={{REGIONAL}}'       // ID Correcto del Log
-               + '&entry.409757390={{LINEA_NEGOCIO}}'  // ID Correcto del Log
-               + '&entry.1973738532={{DISPOSITIVO}}',   // ID Correcto del Log
+    // NUEVAS URLs DE PRE-LLENADO INYECTADAS
+    FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLSc9bj-Md8id3AofTkxR6-NNWr72uNq38XRfaIgUfTHPl1EMmw/viewform?usp=pp_url' 
+               + '&entry.822293003={{NOMBRE}}'
+               + '&entry.1106767619={{CEDULA}}'
+               + '&entry.1012678502={{CARGO}}'
+               + '&entry.1571972692={{EMAIL}}'
+               + '&entry.639878995={{REGIONAL}}'
+               + '&entry.783673536={{LINEA_NEGOCIO}}'
+               + '&entry.696010879={{DISPOSITIVO}}',
 
-    UPDATE_FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLSf6XNwlX--mQwpzTExQi_hXRdu4SQfPgA706WKIA2Dcg5RF-w/viewform?usp=pp_url' 
-               + '&entry.1636369527={{CEDULA}}'
-               + '&entry.965425892={{NOMBRE}}'
+    UPDATE_FORM_BASE: 'https://docs.google.com/forms/d/e/1FAIpQLSfWeXGUEoLMGNQ2YlVNXsVZf1mMlG0eWp5ihify6KpXnbww8A/viewform?usp=pp_url' 
+               + '&entry.321760425={{CEDULA}}'
+               + '&entry.2137361364={{NOMBRE}}'
   }
 };
 
@@ -39,7 +37,6 @@ function instalarDisparador() {
   try {
     const form = FormApp.openById(CONFIG.IDS.FORM_ID);
     
-    // Eliminar triggers viejos para evitar duplicados o errores con el form anterior
     const triggers = ScriptApp.getProjectTriggers();
     for (const t of triggers) {
       if (t.getHandlerFunction() === 'procesarFormulario') {
@@ -47,7 +44,6 @@ function instalarDisparador() {
       }
     }
     
-    // Crear nuevo trigger conectado al nuevo ID
     ScriptApp.newTrigger('procesarFormulario')
       .forForm(form)
       .onFormSubmit()
@@ -90,11 +86,26 @@ function getInitData() {
     const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol] : 'Usuario';
     const isAdminUI = ['Administrador', 'UsuarioAdministrador'].includes(userRole);
 
+    // --- NUEVO: OBTENER LISTA DE EVALUADORES SI ES ADMINISTRADOR ---
+    let evaluadoresUnicos = [];
+    if (isAdminUI) {
+      try {
+        const evSheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
+        const evData = evSheet.getDataRange().getValues();
+        const idxEv = evData[0].indexOf('Evaluador');
+        if (idxEv > -1) {
+          const lista = evData.slice(1).map(r => r[idxEv]).filter(e => e && e.toString().trim() !== '');
+          evaluadoresUnicos = [...new Set(lista)].sort();
+        }
+      } catch (e) { console.warn("No se pudo obtener la lista de evaluadores: " + e.message); }
+    }
+
     return { 
       success: true, 
       email: userEmail, 
       role: userRole,
       isAdmin: isAdminUI,
+      evaluadores: evaluadoresUnicos, // Enviamos los evaluadores al frontend
       formUrlBase: CONFIG.URLS.FORM_BASE,
       updateUrlBase: CONFIG.URLS.UPDATE_FORM_BASE,
       templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`,
@@ -109,7 +120,6 @@ function buscarEmpleado(cedula) {
     const data = sheet.getDataRange().getValues();
     const headers = data[0]; 
     
-    // MAPEO DE COLUMNAS 
     const map = {
       cedula: headers.indexOf('Identificacion'), 
       nombre: headers.indexOf('Nombre'),         
@@ -119,7 +129,8 @@ function buscarEmpleado(cedula) {
       email: headers.indexOf('eMail'),
       compania: headers.indexOf('Compania'),
       estado: headers.indexOf('Estado'),
-      // --- CAMPOS QUE SE PRE-LLENARÁN EN EL FORMULARIO ---
+      codigo: headers.indexOf('Codigo'),
+      contrato: headers.indexOf('Contrato'),
       regional: headers.indexOf('Regional'),
       lineaNegocio: headers.indexOf('lineaNegocio'),
       dispositivo: headers.indexOf('Dispositivo')
@@ -130,7 +141,6 @@ function buscarEmpleado(cedula) {
 
     if (!empleado) return { found: false };
 
-    // Validación de duplicados (Evaluación ya existente este año)
     let existingEvaluation = null;
     try {
       const currentYear = new Date().getFullYear();
@@ -174,8 +184,8 @@ function buscarEmpleado(cedula) {
         email: empleado[map.email] || '',
         compania: (map.compania > -1 && empleado[map.compania]) ? empleado[map.compania] : 'G4S Secure Solutions',
         estado: map.estado > -1 ? empleado[map.estado] : 'Activo',
-        
-        // Datos para Pre-llenar
+        codigo: (map.codigo > -1 && empleado[map.codigo]) ? empleado[map.codigo] : '',
+        contrato: (map.contrato > -1 && empleado[map.contrato]) ? empleado[map.contrato] : '',
         regional: (map.regional > -1 && empleado[map.regional]) ? empleado[map.regional] : '',
         lineaNegocio: (map.lineaNegocio > -1 && empleado[map.lineaNegocio]) ? empleado[map.lineaNegocio] : '',
         dispositivo: (map.dispositivo > -1 && empleado[map.dispositivo]) ? empleado[map.dispositivo] : ''
@@ -191,7 +201,10 @@ function procesarFormulario(e) {
   const r = {}; 
   items.forEach(i => r[i.getItem().getTitle()] = i.getResponse());
 
-  // 1. Datos Básicos
+  let felicitacionesBase = r['Felicitaciones (Últimos 6 meses)'] || 'NO';
+  let descFelic = r['Descripción de felicitaciones (Si marcó SÍ)'] || '';
+  let felicitacionesFinal = descFelic ? `${felicitacionesBase} - ${descFelic}` : felicitacionesBase;
+
   const datos = {
     nombreEvaluado: r['Nombre del Evaluado'] || '',
     cedula: r['Cédula'] || '',
@@ -202,18 +215,15 @@ function procesarFormulario(e) {
     emailEvaluador: e.response.getRespondentEmail(),
     fechaEvaluacion: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm"),
     
-    // 2. Nuevos Campos (Prioridad: Lo que viene del Formulario)
     regional: r['Regional'] || '',
     lineaNegocio: r['Línea de Negocio'] || '',
     dispositivo: r['Dispositivo'] || '',
 
-    // 3. Campos Extras
     antecedentes: r['Antecedentes Disciplinarios (Últimos 6 meses)'] || 'NO',
-    felicitaciones: r['Felicitaciones (Últimos 6 meses)'] || 'NO',
+    felicitaciones: felicitacionesFinal,
     relacion: r['Relación con el evaluado'] || '-',
     evaluacionGlobal: mapScore(r['Calificación Global Subjetiva'] || r['Evaluación Global']),
 
-    // 4. Textos Abiertos
     fortalezas: r['FORTALEZAS'] || '',
     oportunidades: r['OPORTUNIDADES'] || '',
     compromisos: r['COMPROMISO DE LAS OPORTUNIDADES'] || '',
@@ -221,7 +231,6 @@ function procesarFormulario(e) {
     conceptoJefe: r['CONCEPTO GENERAL DEL JEFE INMEDIATO'] || ''
   };
 
-  // 5. Preguntas P1-P20
   for (const [titulo, respuesta] of Object.entries(r)) {
     const match = titulo.match(/^(\d+)\./);
     if (match) { 
@@ -230,17 +239,17 @@ function procesarFormulario(e) {
     }
   }
 
-  // 6. Enriquecimiento Fallback (Si faltan datos en el form, usar la DB)
   const infoExtra = buscarEmpleado(datos.cedula);
   if (infoExtra.found) {
     datos.sucursal = infoExtra.data.sucursal;
     datos.fechaIngreso = infoExtra.data.fechaIngreso;
     datos.compania = infoExtra.data.compania; 
+    datos.codigo = infoExtra.data.codigo || '';
+    datos.contrato = infoExtra.data.contrato || '';
     
     if(!datos.regional) datos.regional = infoExtra.data.regional;
     if(!datos.lineaNegocio) datos.lineaNegocio = infoExtra.data.lineaNegocio;
     if(!datos.dispositivo) datos.dispositivo = infoExtra.data.dispositivo;
-    
     if (!datos.emailEvaluado) datos.emailEvaluado = infoExtra.data.email;
   }
   
@@ -266,12 +275,9 @@ function generarPDF(datos) {
       '{{FECHA_EVALUACION}}': datos.fechaEvaluacion, 
       '{{EVALUACION_GLOBAL}}': datos.evaluacionGlobal,
       '{{COMPANIA}}': datos.compania || 'G4S',
-      
-      // NUEVOS CAMPOS EN PDF
       '{{REGIONAL}}': datos.regional || '',
       '{{LINEA_NEGOCIO}}': datos.lineaNegocio || '',
       '{{DISPOSITIVO}}': datos.dispositivo || '',
-      
       '{{ANTECEDENTES}}': datos.antecedentes,
       '{{FELICITACIONES}}': datos.felicitaciones,
       '{{RELACION}}': datos.relacion,
@@ -328,22 +334,18 @@ function saveToSheet(datos, urlPdf) {
       if (header === 'idEvaluacion') return Utilities.getUuid();
       if (header === 'Fecha de Creación') return new Date();
       if (header === 'Usuario') return datos.emailEvaluador;
+      if (header === 'Codigo') return datos.codigo || ''; 
       if (header === 'Estado') return 'Finalizado';
       if (header === 'Cedula') return datos.cedula;
       if (header === 'Nombre') return datos.nombreEvaluado;
       if (header === 'Cargo') return datos.cargo;
-      if (header === 'Sucursal') return datos.sucursal;
+      if (header === 'Sucursal') return datos.sucursal || '';
       if (header === 'Empresa') return datos.compania || 'G4S';
       if (header === 'Email') return datos.emailEvaluado;
-      if (header === 'Fecha Ingreso') return datos.fechaIngreso;
+      if (header === 'Fecha Ingreso') return datos.fechaIngreso || '';
+      if (header === 'Contrato') return datos.contrato || '';
       if (header === 'Evaluador') return datos.nombreEvaluador;
       if (header === 'Cargo Ev') return datos.cargoEvaluador;
-      
-      // --- MAPEO DE NUEVAS COLUMNAS (Se toman del formulario) ---
-      if (header === 'Regional') return datos.regional;
-      if (header === 'lineaNegocio') return datos.lineaNegocio;
-      if (header === 'Dispositivo') return datos.dispositivo;
-      // ---------------------------------------------------------
       
       if (header === 'Compromiso') return datos.compromisos; 
       if (header === 'Concepto') return datos.conceptoJefe;
@@ -355,10 +357,18 @@ function saveToSheet(datos, urlPdf) {
       if (header === 'Fortalezas') return datos.fortalezas;
       if (header === 'Oportunidades') return datos.oportunidades;
       if (header === 'Sugerencias') return datos.sugerencias;
-      if (header === 'LinkRepoteFinal') return urlPdf;
       
-      if (header.startsWith('Pregunta ') || header.startsWith('P')) {
-        const num = header.replace(/\D/g, ''); return datos[`p${num}`] || '';
+      if (header === 'LinkRepoteFinal') return urlPdf;
+      if (header === 'UsuarioActulizacion') return ''; 
+      if (header === 'FechaActualizacion') return ''; 
+      
+      if (header === 'Regional') return datos.regional;
+      if (header === 'lineaNegocio') return datos.lineaNegocio;
+      if (header === 'Dispositivo') return datos.dispositivo;
+      
+      if (header.startsWith('Pregunta ') || (header.startsWith('P') && header.length <= 3)) {
+        const num = header.replace(/\D/g, ''); 
+        return datos[`p${num}`] || '';
       }
       
       return '';
@@ -400,7 +410,8 @@ function mapScore(val) {
   return strVal;
 }
 
-function getReportData(inicio, fin) {
+// --- ACTUALIZADO: REPORTE CON FILTRO DE EVALUADOR Y CAMPO DE EVALUADOR ---
+function getReportData(inicio, fin, evaluadorFiltro) {
   try {
     const userInit = getInitData();
     if (userInit.error) return [];
@@ -409,26 +420,40 @@ function getReportData(inicio, fin) {
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
+    
     const iFecha = headers.indexOf('Fecha de Creación');
     const iUser = headers.indexOf('Usuario');
     const iNombre = headers.indexOf('Nombre');
     const iCedula = headers.indexOf('Cedula');
     const iRes = headers.indexOf('Evglobal');
     const iLink = headers.indexOf('LinkRepoteFinal');
+    const iEvaluador = headers.indexOf('Evaluador'); // <- Nuevo para Excel y Tabla
+    
     const d1 = new Date(inicio + "T00:00:00"); 
     const d2 = new Date(fin + "T23:59:59"); 
+    
     const filtrados = data.slice(1).filter(r => {
       const fechaRow = new Date(r[iFecha]);
       const userRow = (r[iUser] || "").toString().toLowerCase();
+      const evalRow = iEvaluador > -1 ? (r[iEvaluador] || "").toString().trim() : "";
       const enFecha = fechaRow >= d1 && fechaRow <= d2;
-      if (userRole === 'Administrador') return enFecha;
+      
+      // Lógica de filtrado Admin vs Evaluador normal
+      if (userRole === 'Administrador' || userRole === 'UsuarioAdministrador') {
+        if (evaluadorFiltro && evaluadorFiltro !== 'TODOS' && evalRow !== evaluadorFiltro) {
+          return false;
+        }
+        return enFecha;
+      }
       return enFecha && userRow === userEmail.toLowerCase();
     });
+    
     return filtrados.map(r => {
       const originalLink = r[iLink] || '#';
       const embedLink = originalLink.replace(/\/view.*/, '/preview').replace(/\/edit.*/, '/preview');
       return {
         fecha: formatFecha(r[iFecha]),
+        evaluador: iEvaluador > -1 ? r[iEvaluador] : 'Desconocido', // <- Nuevo
         nombre: r[iNombre] || 'Desconocido',
         cedula: r[iCedula] || '-',
         resultado: r[iRes] || '-',
