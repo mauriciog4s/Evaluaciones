@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Evaluaciones G4S</title>
+  <link rel="icon" href="https://www.g4s.com/favicon.ico">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root { --g4s-red: #c1272d; --g4s-black: #231f20; --side-w: 260px; }
+    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    #system-loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+    .loader-hidden { opacity: 0; pointer-events: none; }
+    
+    #sidebar { width: var(--side-w); height: 100vh; position: fixed; left: 0; top: 0; background: white; border-right: 1px solid #e2e8f0; z-index: 1000; transition: transform 0.3s ease; }
+    #main-wrapper { margin-left: var(--side-w); padding: 30px; transition: margin-left 0.3s ease; }
+
+    @media (max-width: 768px) { 
+      #sidebar { transform: translateX(-100%); } 
+      #sidebar.open { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+      #main-wrapper { margin-left: 0; padding: 20px; padding-top: 80px; }
+      #mobile-header { display: flex !important; }
+    }
+
+    .nav-item { padding: 12px 24px; display: flex; align-items: center; color: #64748b; cursor: pointer; border-left: 4px solid transparent; font-size: 14px; transition: 0.2s; font-weight: 500; }
+    .nav-item:hover { background: #f8fafc; color: var(--g4s-black); }
+    .nav-item.active { background: #fff1f2; color: var(--g4s-red); border-left-color: var(--g4s-red); font-weight: bold; }
+    
+    .quick-card { transition: all 0.3s ease; border: 1px solid #e2e8f0; }
+    .quick-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: var(--g4s-red); }
+
+    .hidden { display: none !important; }
+    
+    .glass-overlay {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.4s ease;
+    }
+
+    .skeleton-row {
+      height: 20px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @keyframes bounceIn {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-badge { animation: bounceIn 0.4s ease forwards; }
+  </style>
+</head>
+<body onload="initApp()">
+
+  <div id="system-loader">
+    <div class="w-12 h-12 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-4"></div>
+    <div class="text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase animate-pulse">Cargando G4S...</div>
+  </div>
+
+  <header id="mobile-header" class="fixed top-0 left-0 right-0 h-16 bg-white border-b z-[500] px-4 hidden items-center justify-between">
+      <img src="https://www.g4s.com/es-co/-/media/g4s/global/images/logos/g4s---an-allied-universal-company-logo/g4s_one-company_logo_180x136.ashx" class="h-8">
+      <button onclick="toggleMenu()" class="p-2 text-gray-600"><span class="material-icons">menu</span></button>
+  </header>
+
+  <aside id="sidebar">
+    <div class="p-8 flex justify-center border-b border-gray-100">
+      <img src="https://www.g4s.com/es-co/-/media/g4s/global/images/logos/g4s---an-allied-universal-company-logo/g4s_one-company_logo_180x136.ashx" class="h-10">
+    </div>
+    <nav class="mt-6 space-y-1">
+      <div onclick="nav('inicio')" class="nav-item hidden" id="m-inicio"><span class="material-icons mr-3">dashboard</span> Inicio</div>
+      <div onclick="nav('evaluar')" class="nav-item hidden" id="m-evaluar"><span class="material-icons mr-3">assignment_ind</span> Evaluar Talento</div>
+      <div onclick="nav('mis-evaluaciones')" class="nav-item hidden" id="m-mis-evaluaciones"><span class="material-icons mr-3">history</span> Mis Evaluaciones</div>
+      
+      <div id="admin-menu" class="hidden border-t border-gray-100 mt-4 pt-4">
+        <p class="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Administración</p>
+        <div onclick="nav('usuarios')" class="nav-item hidden" id="m-usuarios"><span class="material-icons mr-3">people</span> Usuarios</div>
+        <div onclick="nav('formulario')" class="nav-item hidden" id="m-formulario"><span class="material-icons mr-3">edit_note</span> Formulario</div>
+        <div onclick="nav('form-update')" class="nav-item hidden" id="m-form-update"><span class="material-icons mr-3">manage_accounts</span> Form. Actualización</div>
+        <div onclick="nav('plantilla')" class="nav-item hidden" id="m-plantilla"><span class="material-icons mr-3">description</span> Plantilla</div>
+      </div>
+    </nav>
+    <div class="absolute bottom-0 w-full p-6 border-t bg-gray-50">
+      <p id="user-email-display" class="text-[10px] text-gray-500 font-bold mb-1 truncate">Cargando...</p>
+      <span id="user-role-display" class="inline-block px-2 py-0.5 rounded bg-gray-100 text-[9px] font-black uppercase text-gray-600 mb-3 tracking-wide border border-gray-200">...</span>
+      <button onclick="logout()" class="text-[10px] font-bold text-red-600 uppercase flex items-center hover:text-red-800 tracking-widest mt-2 w-full justify-center"><span class="material-icons text-sm mr-1">power_settings_new</span> Cerrar Sesión</button>
+    </div>
+  </aside>
+
+  <div id="main-wrapper">
+    
+    <section id="sec-inicio" class="hidden animate__animated animate__fadeIn">
+      <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tight">Resumen General</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col">
+           <div class="flex justify-between items-center mb-4">
+             <h3 class="font-bold text-gray-700">Distribución de Calificaciones (1-5)</h3>
+             <span id="stat-total-badge" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">Total: 0</span>
+           </div>
+           <div class="h-64 relative flex justify-center w-full">
+             <canvas id="myChart"></canvas>
+           </div>
+        </div>
+        <div class="space-y-4">
+           <div onclick="nav('evaluar')" class="quick-card bg-white p-6 rounded-2xl cursor-pointer flex items-center gap-4 group">
+              <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-[#c1272d] group-hover:bg-[#c1272d] group-hover:text-white transition-colors">
+                <span class="material-icons">add_task</span>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-800">Nueva Evaluación</h4>
+                <p class="text-xs text-gray-500">Iniciar proceso</p>
+              </div>
+              <span class="material-icons ml-auto text-gray-300 group-hover:text-[#c1272d]">chevron_right</span>
+           </div>
+           <div onclick="nav('mis-evaluaciones')" class="quick-card bg-white p-6 rounded-2xl cursor-pointer flex items-center gap-4 group">
+              <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <span class="material-icons">history</span>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-800">Mis Evaluaciones</h4>
+                <p class="text-xs text-gray-500">Consultar historial</p>
+              </div>
+              <span class="material-icons ml-auto text-gray-300 group-hover:text-blue-600">chevron_right</span>
+           </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mt-6">
+         <h3 class="font-bold text-gray-700 mb-4">Cantidad de Evaluaciones por Regional</h3>
+         <div class="flex gap-4 mb-4 flex-wrap">
+           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="dash-start" class="border p-2 rounded-lg text-sm outline-none w-full"></div>
+           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="dash-end" class="border p-2 rounded-lg text-sm outline-none w-full"></div>
+          <div class="flex-grow max-w-[200px]">
+  <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+  <select id="dash-regional" class="border p-2 rounded-lg text-sm w-full outline-none bg-white focus:border-red-500 transition-colors">
+    <option value="TODOS">Todos</option>
+  </select>
+</div>
+           <button onclick="cargarTablaDashboard()" class="bg-[#231f20] text-white px-6 py-2 rounded-lg text-xs font-bold uppercase mt-auto h-10 hover:bg-black transition">Consultar</button>
+         </div>
+         <div class="border rounded-xl overflow-hidden">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Regional</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
+              <tbody id="dash-regional-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros y consulte.</td></tbody>
+            </table>
+         </div>
+      </div>
+    </section>
+
+    <section id="sec-evaluar" class="hidden">
+      <div class="max-w-2xl mx-auto mt-6">
+        <h2 class="text-2xl font-black text-center mb-8 uppercase">Evaluar Talento</h2>
+        <div id="search-box" class="bg-white p-2 rounded-2xl shadow-xl border flex items-center gap-3">
+          <span class="material-icons text-gray-400 ml-4">search</span>
+          <input type="number" id="input-cedula" class="w-full p-3 bg-transparent outline-none text-lg font-bold placeholder-gray-300" placeholder="Número de Cédula">
+          <button onclick="buscarEmpleado()" id="btn-buscar" class="bg-[#231f20] text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition flex items-center gap-2">BUSCAR</button>
+        </div>
+        <div id="result-card" class="hidden mt-8 bg-white rounded-3xl shadow-2xl overflow-hidden border">
+           <div class="bg-[#231f20] p-6 text-white relative">
+             <span class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold uppercase">Colaborador</span>
+             <h2 id="card-nombre" class="text-xl font-black mt-2">Nombre</h2>
+             <p id="card-cargo" class="text-red-400 text-xs font-bold uppercase mt-1">Cargo</p>
+           </div>
+           <div class="p-6">
+             <div class="grid grid-cols-2 gap-4 mb-6">
+               <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Cédula</small><span id="card-cedula" class="font-bold text-sm">-</span></div>
+               <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Sucursal</small><span id="card-sucursal" class="font-bold text-sm">-</span></div>
+             </div>
+             <div id="action-container">
+               <button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span></button>
+             </div>
+           </div>
+           <div class="text-center pb-6"><button onclick="resetSearch()" class="text-xs text-gray-400 font-bold hover:text-black">NUEVA BÚSQUEDA</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-mis-evaluaciones" class="hidden">
+      <div class="flex items-center gap-3 mb-6">
+        <h2 class="text-2xl font-black uppercase m-0">Mis Evaluaciones</h2>
+        <div id="badge-count" class="hidden items-center justify-center bg-[#c1272d] text-white text-[11px] font-bold h-6 min-w-[24px] px-2 rounded-full shadow-sm border-[1.5px] border-white z-10">0</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border mb-6 flex gap-4 flex-wrap items-end shadow-sm">
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
+        
+        <div id="filter-evaluator-container" class="hidden min-w-[180px]">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Evaluador</label>
+          <select id="report-evaluator" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500">
+            <option value="TODOS">Todos</option>
+          </select>
+        </div>
+
+        <button onclick="cargarReportes()" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 hover:bg-black transition">Filtrar</button>
+        <button onclick="descargarExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 hover:bg-green-700 ml-auto shadow-sm">
+          <span class="material-icons text-sm">table_view</span> EXCEL
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
+               <tr>
+                 <th class="p-4">Fecha</th>
+                 <th class="p-4">Evaluador</th>
+                 <th class="p-4">Regional</th>
+                 <th class="p-4">Evaluado</th>
+                 <th class="p-4">Calificación (1-5)</th>
+                 <th class="p-4">PDF</th>
+               </tr>
+            </thead>
+            <tbody id="report-body" class="divide-y"><tr><td colspan="6" class="p-8 text-center text-gray-400 italic">Cargando registros...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sec-usuarios" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-black uppercase">Gestión Usuarios</h2>
+        <button onclick="modalUsuario('CREATE')" class="bg-[#c1272d] text-white px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
+          <span class="material-icons text-sm">add</span> Nuevo
+        </button>
+      </div>
+      <div class="bg-white rounded-xl border overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
+            <tr><th class="p-4">Nombre</th><th class="p-4">Correo</th><th class="p-4">Rol</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr>
+          </thead>
+          <tbody id="users-body" class="divide-y"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sec-formulario" class="hidden">
+      <h2 class="text-2xl font-black mb-6 uppercase">Editor de Preguntas</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4" id="questions-list">
+          </div>
+        <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
+           <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
+           <button onclick="addQuestion()" class="w-full py-3 bg-slate-800 hover:bg-black transition text-white rounded-lg font-bold text-sm mb-4 flex justify-center gap-2 items-center">
+             <span class="material-icons text-sm">add_circle</span> Agregar Pregunta
+           </button>
+           <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+             <p class="text-[10px] text-blue-600 mb-2 font-bold uppercase">Nota Técnica:</p>
+             <p class="text-xs text-blue-800 leading-relaxed">Los cambios en el formulario se reflejan inmediatamente en la App de Google Forms.</p>
+           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-form-update" class="hidden">
+      <h2 class="text-2xl font-black mb-6 uppercase">Editor: Formulario Actualización</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4" id="update-questions-list">
+          </div>
+        <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
+           <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
+           <button onclick="addUpdateQuestion()" class="w-full py-3 bg-[#c1272d] hover:bg-[#a01b20] transition text-white rounded-lg font-bold text-sm mb-4 flex justify-center gap-2 items-center">
+             <span class="material-icons text-sm">add_circle</span> Agregar Campo Texto
+           </button>
+           <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+             <p class="text-[10px] text-yellow-600 mb-2 font-bold uppercase">Advertencia:</p>
+             <p class="text-xs text-yellow-800 leading-relaxed">Estás editando el formulario de Habeas Data y Contacto. Agrega solo campos de texto necesarios.</p>
+           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-plantilla" class="hidden">
+      <h2 class="text-2xl font-black mb-6 uppercase">Gestión de Plantilla</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 bg-white rounded-2xl shadow-lg border overflow-hidden">
+          <div class="bg-blue-600 p-6 text-white flex justify-between items-center">
+            <div><h3 class="font-black text-xl uppercase">Plantilla Oficial</h3><p class="text-blue-100 text-sm mt-1">Google Docs - PDF Generator</p></div>
+            <span class="material-icons text-4xl opacity-50">description</span>
+          </div>
+          <div class="p-8 text-center">
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">Edite el diseño, logos y textos fijos directamente en Google Docs.</p>
+            <button onclick="abrirPlantillaDocs()" class="bg-[#c1272d] text-white px-8 py-4 rounded-xl font-bold uppercase shadow-xl hover:bg-[#a01b20] transition flex items-center justify-center gap-3 mx-auto"><span class="material-icons">edit_document</span> Editar en Docs</button>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border shadow-sm h-fit">
+          <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><span class="material-icons text-yellow-500 text-sm">warning</span> Variables del Sistema</h4>
+          <div class="bg-gray-50 p-3 rounded-lg border text-xs font-mono space-y-2 max-h-96 overflow-y-auto">
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2 mb-1">Evaluado</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{NOMBRE_EVALUADO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{CEDULA}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{CARGO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{SUCURSAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-blue-600">{{FECHA_INGRESO}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Evaluador</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-purple-600">{{NOMBRE_EVALUADOR}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-purple-600">{{CARGO_EVALUADOR}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Resultados</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600 font-bold">{{EVALUACION_GLOBAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FECHA_EVALUACION}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{COMPANIA}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">NUEVAS VARIABLES</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{REGIONAL}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{LINEA_NEGOCIO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{DISPOSITIVO}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{ANTECEDENTES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{FELICITACIONES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-green-600">{{RELACION}}</span></div>
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Comentarios</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{FORTALEZAS}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{OPORTUNIDADES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{COMPROMISO_OPORTUNIDADES}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{SUGERENCIAS}}</span></div>
+            <div class="flex justify-between border-b pb-1"><span class="text-orange-600">{{CONCEPTO_JEFE}}</span></div>
+
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Preguntas (1-20)</p>
+            <div class="flex justify-between border-b pb-1"><span class="text-gray-500">{{P1}} ... {{P20}}</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="modal-update-data" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
+    <div class="bg-white rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden relative">
+        <div class="bg-[#231f20] p-5 border-b border-gray-800 flex justify-between items-center z-20 shrink-0">
+            <div>
+              <h3 class="font-black text-white uppercase tracking-widest text-lg flex items-center gap-2"><span class="material-icons text-[#c1272d]">verified_user</span> Actualización de Datos</h3>
+            </div>
+            <button onclick="closeUpdateModal()" class="text-gray-400 hover:text-white transition"><span class="material-icons">close</span></button>
+        </div>
+        <div class="flex flex-col lg:flex-row flex-grow overflow-hidden">
+            <div class="w-full lg:w-1/3 bg-gray-50 p-6 overflow-y-auto border-r border-gray-200">
+               <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mt-4">
+                  <div class="flex items-start gap-2">
+                    <span class="material-icons text-yellow-600 text-sm mt-0.5">info</span>
+                    <div>
+                      <h5 class="font-bold text-yellow-800 text-[10px] uppercase">Requisito Obligatorio</h5>
+                      <p class="text-[10px] text-yellow-700 leading-tight mt-1">Complete para desbloquear la evaluación de desempeño.</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+            <div class="w-full lg:w-2/3 bg-white relative flex flex-col">
+               <div id="loader-update" class="absolute inset-0 flex items-center justify-center bg-white z-10"><span class="material-icons animate-spin text-gray-300">sync</span></div>
+               <iframe id="frame-update" class="w-full flex-grow border-0" onload="handleIframeLoad()"></iframe>
+               <div class="p-4 border-t bg-gray-50 flex justify-between items-center shrink-0">
+                 <button id="btn-continue-update" onclick="abrirFormularioEvaluacionReal()" disabled class="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-lg font-bold uppercase text-xs shadow-none flex items-center gap-2 transition-all"><span class="material-icons text-sm">lock</span> Complete el formulario...</button>
+               </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="modal-form-embed" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border overflow-hidden relative">
+        <div class="bg-white p-4 border-b flex justify-between items-center z-20"><h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3><button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button></div>
+        <div class="flex-grow overflow-hidden relative bg-gray-50"><div id="form-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-white"><div class="w-10 h-10 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-2"></div></div><iframe id="gform-frame" src="" class="w-full h-full border-0" onload="document.getElementById('form-loader').classList.add('hidden')"></iframe></div>
+    </div>
+  </div>
+
+  <div id="modal-pdf-preview" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[4000] p-4">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl overflow-hidden relative">
+        <div class="bg-white p-4 border-b flex justify-between items-center z-20">
+          <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">Reporte de Evaluación</h3>
+          <button onclick="document.getElementById('modal-pdf-preview').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full"><span class="material-icons">close</span></button>
+        </div>
+        <div class="flex-grow overflow-hidden bg-gray-50"><iframe id="pdf-preview-frame" src="" class="w-full h-full border-0"></iframe></div>
+    </div>
+  </div>
+
+  <div id="modal-user" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[2000] p-4">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600"><span class="material-icons">person_add</span></div>
+        <h3 id="modal-user-title" class="font-black text-xl uppercase tracking-tight">Usuario</h3>
+      </div>
+      
+      <form id="form-user" onsubmit="saveUser(event)" class="space-y-4">
+        <input type="hidden" id="u-action"><input type="hidden" id="u-row">
+        
+        <div id="container-nombre" class="hidden">
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre (Opcional si tiene fórmula)</label>
+          <input id="u-nombre" placeholder="Nombre completo" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Correo Electrónico</label>
+          <input id="u-correo" type="email" placeholder="usuario@g4s.com" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500 transition-colors" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Rol</label>
+            <select id="u-rol" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
+              <option>Administrador</option><option>Evaluador</option><option>UsuarioAdministrador</option><option>Usuario</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Estado</label>
+            <select id="u-estado" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
+              <option>Activo</option><option>Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-6">
+          <button type="button" onclick="document.getElementById('modal-user').classList.add('hidden')" class="flex-1 py-3 text-gray-500 font-bold text-xs uppercase hover:bg-gray-100 rounded-xl">Cancelar</button>
+          <button type="submit" id="btn-save-user" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-red-700 flex items-center justify-center gap-2">
+            <span id="btn-save-text">Guardar</span>
+            <span id="btn-save-loader" class="hidden material-icons animate-spin text-sm">sync</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let appData = {};
+    let currentEmployee = null;
+    let usersList = [];
+    let reportData = [];
+    let myChart = null;
+    let updateFormLoads = 0; 
+
+    function aplicarPermisos(role) {
+      const userRole = role ? role.trim() : 'Usuario';
+      const permissions = {
+        'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
+        'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'Usuario': ['m-mis-evaluaciones']
+      };
+      const myPermissions = permissions[userRole] || ['m-mis-evaluaciones']; 
+      const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
+      allItems.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+      myPermissions.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
+      if (myPermissions.includes('m-inicio')) nav('inicio');
+      else if (myPermissions.includes('m-usuarios')) nav('usuarios');
+      else nav('mis-evaluaciones');
+    }
+
+    function initApp() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(data => {
+             const loader = document.getElementById('system-loader');
+             if(data.error) {
+               loader.innerHTML = `<div class="text-center p-8"><h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3><p class="text-sm text-slate-500">${data.message}</p></div>`;
+               return; 
+             }
+             appData = data;
+             loader.classList.add('loader-hidden');
+             setTimeout(() => loader.style.display = 'none', 500);
+
+             document.getElementById('user-email-display').innerText = data.email;
+             document.getElementById('user-role-display').innerText = data.role;
+             aplicarPermisos(data.role);
+
+             if (data.isAdmin && data.evaluadores && data.evaluadores.length > 0) {
+                const select = document.getElementById('report-evaluator');
+                document.getElementById('filter-evaluator-container').classList.remove('hidden');
+                data.evaluadores.forEach(ev => {
+                    const opt = document.createElement('option');
+                    opt.value = ev; opt.innerText = ev;
+                    select.appendChild(opt);
+                });
+             }
+             if(data.dashboard && (data.role === 'Administrador' || data.role === 'Evaluador')) {
+                // 🔴 Llenar el select de Regionales dinámicamente
+                if (data.regionales && data.regionales.length > 0) {
+                    const selectReg = document.getElementById('dash-regional');
+                    data.regionales.forEach(reg => {
+                        const opt = document.createElement('option');
+                        opt.value = reg; 
+                        opt.innerText = reg;
+                        selectReg.appendChild(opt);
+                    });
+                }
+                renderDashboard(data.dashboard);
+             }
+          })
+          .getInitData();
+      }
+    }
+
+    function renderDashboard(dash) {
+        document.getElementById('stat-total-badge').innerText = `Total: ${dash.total}`;
+        const canvas = document.getElementById('myChart');
+        if(canvas) {
+            const ctx = canvas.getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['5 - Excelente', '4 - Muy Bueno', '3 - Bueno', '2 - Regular', '1 - Deficiente'],
+                    datasets: [{
+                        data: [dash.c5 || 0, dash.c4 || 0, dash.c3 || 0, dash.c2 || 0, dash.c1 || 0],
+                        backgroundColor: ['#15803d', '#4ade80', '#3b82f6', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } } } }
+            });
+        }
+        const date = new Date();
+        const fDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+        const lDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+        document.getElementById('dash-start').value = fDay;
+        document.getElementById('dash-end').value = lDay;
+        cargarTablaDashboard();
+    }
+
+    function cargarTablaDashboard() {
+       const ini = document.getElementById('dash-start').value;
+       const fin = document.getElementById('dash-end').value;
+       const reg = document.getElementById('dash-regional').value;
+       document.getElementById('dash-regional-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-500 animate-pulse">Consultando...</td></tr>`;
+       google.script.run.withSuccessHandler(res => {
+         if(!res || res.length === 0) {
+           document.getElementById('dash-regional-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-400">Sin datos para este periodo.</td></tr>`;
+           return;
+         }
+         let html = res.map(item => `
+           <tr class="hover:bg-gray-50 border-b transition">
+             <td class="p-4 font-bold text-gray-700 text-xs">${item.regional}</td>
+             <td class="p-4 text-right"><span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg font-black text-xs">${item.cantidad}</span></td>
+           </tr>
+         `).join('');
+         document.getElementById('dash-regional-body').innerHTML = html;
+       }).getStatsRegional(ini, fin, reg);
+    }
+
+    function nav(id) {
+      document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('sec-' + id).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const menuItem = document.getElementById('m-' + id);
+      if(menuItem) menuItem.classList.add('active');
+      if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
+      if(id === 'usuarios') loadUsers();
+      if(id === 'formulario') loadQuestions();
+      if(id === 'form-update') loadUpdateQuestions();
+      if(id === 'mis-evaluaciones') {
+          const date = new Date();
+          const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+          document.getElementById('report-start').value = firstDay;
+          document.getElementById('report-end').value = lastDay;
+          cargarReportes();
+      }
+    }
+
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
+    function logout() { window.top.location.href = "https://accounts.google.com/Logout"; }
+
+    function buscarEmpleado() {
+      const cedula = document.getElementById('input-cedula').value;
+      if(!cedula || typeof google === 'undefined') return;
+      const btn = document.getElementById('btn-buscar'); 
+      const originalText = btn.innerText;
+      btn.innerHTML = '<span class="material-icons animate-spin text-sm mr-2">sync</span>';
+      btn.disabled = true;
+      
+      google.script.run.withSuccessHandler(res => {
+         btn.innerHTML = originalText; btn.disabled = false;
+         if(!res.found) return Swal.fire('No encontrado', 'Cédula no existe', 'warning');
+         currentEmployee = res.data;
+         document.getElementById('card-nombre').innerText = res.data.nombre;
+         document.getElementById('card-cargo').innerText = res.data.cargo;
+         document.getElementById('card-cedula').innerText = res.data.cedula;
+         document.getElementById('card-sucursal').innerText = res.data.sucursal;
+         document.getElementById('search-box').classList.add('hidden');
+         document.getElementById('result-card').classList.remove('hidden');
+
+         const container = document.getElementById('action-container');
+         if (res.existingEvaluation && res.existingEvaluation.exists) {
+            const ev = res.existingEvaluation;
+            container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4"><div class="flex items-start gap-3"><span class="material-icons text-red-600 mt-1">warning</span><div><h4 class="font-bold text-red-800 text-sm uppercase">Ya evaluado en ${ev.year}</h4><p class="text-xs text-red-700 mt-1">Este colaborador ya tiene un registro.</p><button onclick="verPdfExistente('${ev.pdfLink}')" class="mt-3 w-full bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-700">Ver Reporte</button></div></div></div>`;
+         } else {
+            container.innerHTML = `<button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span></button>`;
+         }
+      }).buscarEmpleado(cedula);
+    }
+
+    function verPdfExistente(url) {
+      document.getElementById('pdf-preview-frame').src = url;
+      document.getElementById('modal-pdf-preview').classList.remove('hidden');
+      document.getElementById('modal-pdf-preview').classList.add('flex');
+    }
+
+    function resetSearch() { 
+        currentEmployee = null; 
+        document.getElementById('result-card').classList.add('hidden'); 
+        document.getElementById('search-box').classList.remove('hidden'); 
+        document.getElementById('input-cedula').value = ''; 
+    }
+
+    function iniciarProcesoEvaluacion() {
+      if(!currentEmployee) return;
+      updateFormLoads = 0;
+      const btn = document.getElementById('btn-continue-update');
+      btn.disabled = true;
+      btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+      btn.classList.remove('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
+      btn.innerHTML = '<span class="material-icons text-sm">lock</span> Complete el formulario...';
+
+      let urlUpdate = appData.updateUrlBase
+          .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
+          .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre));
+
+      if(!urlUpdate.includes('embedded=true')) urlUpdate += '&embedded=true';
+      document.getElementById('loader-update').classList.remove('hidden');
+      document.getElementById('frame-update').src = urlUpdate;
+      
+      const modal = document.getElementById('modal-update-data');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    
+    function handleIframeLoad() {
+      document.getElementById('loader-update').classList.add('hidden');
+      updateFormLoads++;
+      if (updateFormLoads > 1) {
+         const btn = document.getElementById('btn-continue-update');
+         btn.disabled = false;
+         btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+         btn.classList.add('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
+         btn.innerHTML = 'CONTINUAR A EVALUACIÓN';
+      }
+    }
+
+    function closeUpdateModal() {
+      document.getElementById('modal-update-data').classList.add('hidden');
+      document.getElementById('frame-update').src = 'about:blank';
+    }
+
+    function abrirFormularioEvaluacionReal() {
+      closeUpdateModal();
+      if(!currentEmployee) return;
+      
+      let url = appData.formUrlBase
+        .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre))
+        .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
+        .replace('{{CARGO}}', encodeURIComponent(currentEmployee.cargo))
+        .replace('{{EMAIL}}', encodeURIComponent(currentEmployee.email))
+        .replace('{{REGIONAL}}', encodeURIComponent(currentEmployee.regional || ''))
+        .replace('{{LINEA_NEGOCIO}}', encodeURIComponent(currentEmployee.lineaNegocio || ''))
+        .replace('{{DISPOSITIVO}}', encodeURIComponent(currentEmployee.dispositivo || ''))
+        .replace('{{NOMBRE_EVALUADOR}}', encodeURIComponent(appData.userName || ''));
+
+      if(!url.includes('embedded=true')) url += '&embedded=true';
+      document.getElementById('gform-frame').src = url;
+      document.getElementById('form-loader').classList.remove('hidden'); 
+      const modal = document.getElementById('modal-form-embed');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+
+    function closeFormModal() { document.getElementById('modal-form-embed').classList.add('hidden'); document.getElementById('gform-frame').src = 'about:blank'; }
+
+    function cargarReportes() {
+      const i = document.getElementById('report-start').value;
+      const f = document.getElementById('report-end').value;
+      const evalFiltro = document.getElementById('report-evaluator').value; 
+      
+      if(!i || !f || typeof google === 'undefined') return;
+      document.getElementById('report-body').innerHTML = '<tr><td colspan="6" class="p-8 text-center animate-pulse">Cargando...</td></tr>';
+      
+      const badge = document.getElementById('badge-count');
+      badge.classList.add('hidden');
+      badge.classList.remove('animate-badge');
+      
+      google.script.run.withSuccessHandler(rows => {
+         reportData = rows;
+         badge.innerText = rows.length;
+         badge.classList.remove('hidden');
+         badge.classList.add('flex', 'animate-badge');
+
+         const html = rows.map((r, index) => {
+           let colorClass = 'text-blue-600 bg-blue-50';
+           const val = parseInt(r.resultado);
+           
+           if(val === 5) colorClass = 'text-green-800 bg-green-100';
+           else if(val === 4) colorClass = 'text-green-600 bg-green-50';
+           else if(val === 3) colorClass = 'text-blue-600 bg-blue-50';
+           else if(val === 2) colorClass = 'text-yellow-600 bg-yellow-50';
+           else if(val === 1) colorClass = 'text-red-600 bg-red-50';
+           else if(r.resultado === 'E') colorClass = 'text-green-800 bg-green-100';
+           else if(r.resultado === 'D') colorClass = 'text-red-600 bg-red-50';
+           
+           const mainRow = `
+             <tr class="hover:bg-gray-50 transition border-b group">
+               <td class="p-4 text-gray-600">${r.fecha}</td>
+               <td class="p-4 text-xs font-semibold text-gray-500">${r.evaluador}</td>
+               <td class="p-4 text-xs font-semibold text-gray-500">${r.regional}</td>
+               <td class="p-4 font-bold text-gray-800">${r.nombre}</td>
+               <td class="p-4"><span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${colorClass}">${r.resultado} / 5</span></td>
+               <td class="p-4"><button onclick="togglePdf(${index}, '${r.embedLink}')" class="text-[#c1272d] font-bold text-xs uppercase hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-2">Ver PDF</button></td>
+             </tr>
+           `;
+           const hiddenRow = `
+             <tr id="pdf-row-${index}" class="hidden bg-gray-50 border-b">
+               <td colspan="6" class="p-4">
+                 <div class="bg-white rounded-xl border shadow-inner overflow-hidden relative" style="height: 600px;">
+                    <iframe id="frame-${index}" class="w-full h-full border-0"></iframe>
+                 </div>
+               </td>
+             </tr>
+           `;
+           return mainRow + hiddenRow;
+         }).join('');
+         document.getElementById('report-body').innerHTML = html || '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
+      }).getReportData(i, f, evalFiltro);
+    }
+
+    function togglePdf(index, url) {
+      const row = document.getElementById(`pdf-row-${index}`);
+      const frame = document.getElementById(`frame-${index}`);
+      document.querySelectorAll('tr[id^="pdf-row-"]').forEach(r => { if(r.id !== `pdf-row-${index}`) r.classList.add('hidden'); });
+      if (row.classList.contains('hidden')) { row.classList.remove('hidden'); if (!frame.src || frame.src === 'about:blank') { frame.src = url; } } else { row.classList.add('hidden'); }
+    }
+    
+    function descargarExcel() {
+      if(!reportData.length) return Swal.fire('Info', 'No hay datos para exportar', 'info');
+      try {
+        const wsData = reportData.map(r => ({
+          'FECHA': r.fecha,
+          'EVALUADOR': r.evaluador,
+          'REGIONAL': r.regional,
+          'EVALUADO': r.nombre,
+          'CÉDULA': r.cedula,
+          'CALIFICACIÓN': r.resultado,
+          'LINK PDF': r.link
+        }));
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte_Evaluaciones");
+        XLSX.writeFile(wb, "Reporte_Evaluaciones_G4S.xlsx");
+      } catch (e) { Swal.fire('Error', 'No se pudo generar el archivo Excel.', 'error'); }
+    }
+
+    function loadUsers() {
+      if(typeof google === 'undefined') return;
+      document.getElementById('users-body').innerHTML = `<tr><td colspan="5" class="p-4 text-center">Cargando...</td></tr>`;
+      google.script.run.withSuccessHandler(users => {
+         usersList = users;
+         const html = users.map(u => `
+            <tr class="border-b hover:bg-gray-50 transition">
+              <td class="p-4 font-bold text-gray-700">${u.nombre}</td>
+              <td class="p-4 text-xs text-gray-500">${u.correo}</td>
+              <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
+              <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td>
+              <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 text-red-600"><span class="material-icons text-sm">delete</span></button></div></td>
+            </tr>`).join('');
+         document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="text-center p-8 text-gray-400">Sin usuarios</td></tr>';
+      }).getUsersData();
+    }
+
+    function modalUsuario(action, row = null) {
+      const modal = document.getElementById('modal-user');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      document.getElementById('u-action').value = action; document.getElementById('u-row').value = row || ''; document.getElementById('form-user').reset();
+      
+      const contNombre = document.getElementById('container-nombre');
+      if(action === 'CREATE') {
+         contNombre.classList.add('hidden');
+         document.getElementById('modal-user-title').innerText = 'Nuevo Usuario';
+      } else {
+         contNombre.classList.remove('hidden');
+         document.getElementById('modal-user-title').innerText = 'Editar Usuario';
+         const u = usersList.find(x => x.row === row);
+         if(u) { document.getElementById('u-nombre').value = u.nombre; document.getElementById('u-correo').value = u.correo; document.getElementById('u-rol').value = u.rol; document.getElementById('u-estado').value = u.estado; }
+      }
+      const btn = document.getElementById('btn-save-user'); const loader = document.getElementById('btn-save-loader'); const btnText = document.getElementById('btn-save-text');
+      btn.disabled = false; btn.classList.remove('opacity-70'); loader.classList.add('hidden'); btnText.innerText = 'Guardar';
+    }
+
+    function editUser(row) { modalUsuario('UPDATE', row); }
+    function saveUser(e) { 
+      e.preventDefault(); if(typeof google === 'undefined') return; 
+      const btn = document.getElementById('btn-save-user'); const loader = document.getElementById('btn-save-loader'); const btnText = document.getElementById('btn-save-text');
+      btn.disabled = true; btn.classList.add('opacity-70'); loader.classList.remove('hidden'); btnText.innerText = 'Procesando...';
+      google.script.run.withSuccessHandler(() => { document.getElementById('modal-user').classList.add('hidden'); loadUsers(); Swal.fire('Guardado', '', 'success'); }).saveUser(document.getElementById('u-action').value, { row: document.getElementById('u-row').value, nombre: document.getElementById('u-nombre').value, correo: document.getElementById('u-correo').value, rol: document.getElementById('u-rol').value, estado: document.getElementById('u-estado').value }); 
+    }
+    function deleteUser(row) { Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d'}).then(r => { if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); }); }
+
+    // --- FUNCIONES RESTAURADAS PARA FORMULARIOS Y PLANTILLAS ---
+    function loadQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">drag_indicator</span><span class="font-bold text-gray-800 text-sm">${q.title}</span></div><div class="flex gap-2"><button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay preguntas configuradas.</p>'; }).getFormStructure(); }
+    function addQuestion() { Swal.fire({ title: 'Nueva Pregunta (Evaluación)', input: 'text', inputPlaceholder: 'Escriba la pregunta aquí...', showCancelButton: true, confirmButtonColor: '#231f20', cancelButtonText: 'Cancelar', confirmButtonText: 'Guardar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Guardando en Forms...', text: 'Por favor espere', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Agregada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('ADD', {title: r.value}); } }); }
+    function delQuestion(id) { Swal.fire({ title: '¿Eliminar Pregunta?', text: "Esta acción borrará la pregunta del formulario oficial.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('DELETE', {id: id}); } }); }
+    function editQuestion(id, currentTitle) { Swal.fire({ title: 'Editar Pregunta', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#231f20', confirmButtonText: 'Actualizar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Actualizada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('UPDATE', {id: id, title: r.value}); } }); }
+    
+    function loadUpdateQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('update-questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { if (list.length > 0 && list[0].id === 0) { document.getElementById('update-questions-list').innerHTML = `<p class="text-red-500 font-bold text-center p-4">${list[0].title}</p>`; return; } const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">short_text</span><div><span class="font-bold text-gray-800 text-sm block">${q.title}</span><span class="text-[10px] text-gray-400 uppercase font-bold">${q.type}</span></div></div><div class="flex gap-2"><button onclick="editUpdateQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delUpdateQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('update-questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay campos configurados.</p>'; }).getUpdateFormStructure(); }
+    function addUpdateQuestion() { Swal.fire({ title: 'Nuevo Campo de Texto', input: 'text', inputPlaceholder: 'Ej: Teléfono de Emergencia', showCancelButton: true, confirmButtonColor: '#c1272d', cancelButtonText: 'Cancelar', confirmButtonText: 'Agregar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Agregando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Campo Agregado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('ADD', {title: r.value}); } }); }
+    function delUpdateQuestion(id) { Swal.fire({ title: '¿Eliminar Campo?', text: "Se borrará este campo del formulario de actualización.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Eliminado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('DELETE', {id: id}); } }); }
+    function editUpdateQuestion(id, currentTitle) { Swal.fire({ title: 'Editar Título del Campo', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#c1272d', confirmButtonText: 'Actualizar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('UPDATE', {id: id, title: r.value}); } }); }
+    function abrirPlantillaDocs() { if(appData && appData.templateUrl) window.open(appData.templateUrl, '_blank'); }
+  </script>
+</body>
+</html>
