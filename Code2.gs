@@ -87,7 +87,7 @@ function getInitData() {
     const hasDashboard = ['Administrador', 'Evaluador'].includes(userRole);
 
     let evaluadoresUnicos = [];
-    let regionalesUnicas = []; // 🔴 NUEVA VARIABLE PARA REGIONALES
+    let regionalesUnicas = []; 
 
     // Obtenemos evaluadores y regionales únicos si el usuario tiene acceso a esas vistas
     if (isAdminUI || hasDashboard) {
