@@ -467,14 +467,16 @@ function getStatsRegional(inicio, fin, regionalFiltro) {
 }
 
 // MEJORA: Nueva función en el backend para obtener las estadísticas por empresa
-function getStatsEmpresa(inicio, fin) {
+function getStatsEmpresa(inicio, fin, regionalFiltro) {
   try {
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     
     const iFecha = headers.indexOf('Fecha de Creación');
-    const iEmpresa = headers.indexOf('Empresa'); // Verifica esta columna según tu hoja de cálculo
+    const iEmpresa = headers.indexOf('Empresa');
+    const iRegional = headers.indexOf('Regional');
+
     if (iFecha === -1 || iEmpresa === -1) return [];
 
     const d1 = new Date(inicio + "T00:00:00");
@@ -484,10 +486,13 @@ function getStatsEmpresa(inicio, fin) {
     data.slice(1).forEach(r => {
       const fechaRow = new Date(r[iFecha]);
       const empRow = (r[iEmpresa] || "").toString().trim();
+      const regRow = iRegional > -1 ? (r[iRegional] || "").toString().trim() : "";
       
       if (fechaRow >= d1 && fechaRow <= d2) {
-        const empKey = empRow || "Sin Especificar";
-        conteo[empKey] = (conteo[empKey] || 0) + 1;
+        if (!regionalFiltro || regionalFiltro === 'TODOS' || regRow === regionalFiltro) {
+          const empKey = empRow || "Sin Especificar";
+          conteo[empKey] = (conteo[empKey] || 0) + 1;
+        }
       }
     });
     return Object.keys(conteo).map(k => ({ empresa: k, cantidad: conteo[k] })).sort((a,b) => b.cantidad - a.cantidad);

@@ -567,6 +567,7 @@
     function cargarTablaDashboardEmpresa() {
        const ini = document.getElementById('dash-start').value;
        const fin = document.getElementById('dash-end').value;
+       const reg = document.getElementById('dash-regional').value;
        
        document.getElementById('dash-empresa-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-500 animate-pulse">Consultando...</td></tr>`;
        
@@ -582,7 +583,7 @@
            </tr>
          `).join('');
          document.getElementById('dash-empresa-body').innerHTML = html;
-       }).getStatsEmpresa(ini, fin);
+       }).getStatsEmpresa(ini, fin, reg);
     }
 
     function nav(id) {
