@@ -84,42 +84,15 @@ function getInitData() {
     const isAdminUI = ['Administrador', 'UsuarioAdministrador'].includes(userRole);
     const hasDashboard = ['Administrador', 'Evaluador'].includes(userRole);
 
-    let evaluadoresUnicos = [];
-    let regionalesUnicas = [];
-    // Obtenemos evaluadores y regionales únicos si el usuario tiene acceso a esas vistas
-    if (isAdminUI || hasDashboard) {
-      try {
-        const evSheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
-        const evData = evSheet.getDataRange().getValues();
-        const evHeaders = evData[0];
-        
-        const idxEv = evHeaders.indexOf('Evaluador');
-        if (idxEv > -1 && isAdminUI) {
-          const listaEv = evData.slice(1).map(r => r[idxEv]).filter(e => e && e.toString().trim() !== '');
-          evaluadoresUnicos = [...new Set(listaEv)].sort();
-        }
-
-        const idxReg = evHeaders.indexOf('Regional');
-        if (idxReg > -1 && hasDashboard) {
-          const listaReg = evData.slice(1).map(r => r[idxReg]).filter(e => e && e.toString().trim() !== '');
-          regionalesUnicas = [...new Set(listaReg)].sort();
-        }
-      } catch (e) { console.warn("No se pudo obtener las listas únicas: " + e.message);
-      }
-    }
-
     return { 
       success: true, 
       email: userEmail, 
       userName: userName,
       role: userRole,
       isAdmin: isAdminUI,
-      evaluadores: evaluadoresUnicos, 
-      regionales: regionalesUnicas, // 🔴 ENVIAMOS LAS REGIONALES AL FRONTEND
       formUrlBase: CONFIG.URLS.FORM_BASE,
       updateUrlBase: CONFIG.URLS.UPDATE_FORM_BASE,
-      templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`,
-      dashboard: getDashboardStats()
+      templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`
     };
   } catch (err) { return { error: true, message: err.message }; }
 }
@@ -389,21 +362,78 @@ function saveToSheet(datos, urlPdf) {
   }
 }
 
+function getLazyData() {
+  try {
+    const userInit = getInitData();
+    if (userInit.error) return { error: true, message: 'Acceso denegado' };
+
+    const isAdminUI = userInit.isAdmin;
+    const hasDashboard = ['Administrador', 'Evaluador'].includes(userInit.role);
+
+    let evaluadoresUnicos = [];
+    let regionalesUnicas = [];
+    let stats = { total: 0, c5:0, c4:0, c3:0, c2:0, c1:0 };
+
+    if (isAdminUI || hasDashboard) {
+      const evSheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
+      const evData = evSheet.getDataRange().getValues();
+      const evHeaders = evData[0];
+
+      const idxEv = evHeaders.indexOf('Evaluador');
+      const idxReg = evHeaders.indexOf('Regional');
+      const idxGlobal = evHeaders.indexOf('Evglobal');
+
+      const rows = evData.slice(1);
+
+      if (idxEv > -1 && isAdminUI) {
+        const listaEv = rows.map(r => r[idxEv]).filter(e => e && e.toString().trim() !== '');
+        evaluadoresUnicos = [...new Set(listaEv)].sort();
+      }
+
+      if (idxReg > -1 && hasDashboard) {
+        const listaReg = rows.map(r => r[idxReg]).filter(e => e && e.toString().trim() !== '');
+        regionalesUnicas = [...new Set(listaReg)].sort();
+      }
+
+      if (idxGlobal > -1 && hasDashboard) {
+        rows.forEach(r => {
+          const val = mapScore(r[idxGlobal]);
+          if (val == 5) stats.c5++;
+          else if (val == 4) stats.c4++;
+          else if (val == 3) stats.c3++;
+          else if (val == 2) stats.c2++;
+          else if (val == 1) stats.c1++;
+        });
+        stats.total = stats.c1 + stats.c2 + stats.c3 + stats.c4 + stats.c5;
+      }
+    }
+
+    return {
+      success: true,
+      evaluadores: evaluadoresUnicos,
+      regionales: regionalesUnicas,
+      dashboard: stats
+    };
+  } catch (e) {
+    return { error: true, message: e.message };
+  }
+}
+
 function getDashboardStats() {
   try {
     const sheet = SpreadsheetApp.openById(CONFIG.IDS.EVALUACIONES).getSheetByName('Evaluaciones');
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     const idxGlobal = headers.indexOf('Evglobal');
-    const total = data.length - 1; 
     let c1=0, c2=0, c3=0, c4=0, c5=0;
-    if (idxGlobal > -1 && total > 0) {
+    if (idxGlobal > -1) {
       data.slice(1).forEach(r => {
-        const val = parseInt(r[idxGlobal]); 
-        if (val === 5) c5++; else if (val === 4) c4++; else if (val === 3) c3++; else if (val === 2) c2++; else if (val === 1) c1++;
+        const val = mapScore(r[idxGlobal]);
+        if (val == 5) c5++; else if (val == 4) c4++; else if (val == 3) c3++; else if (val == 2) c2++; else if (val == 1) c1++;
       });
     }
-    return { total: total > 0 ? total : 0, c5, c4, c3, c2, c1 };
+    const total = c1 + c2 + c3 + c4 + c5;
+    return { total, c5, c4, c3, c2, c1 };
   } catch (e) { return { total: 0, c5:0, c4:0, c3:0, c2:0, c1:0 }; }
 }
 
@@ -464,7 +494,7 @@ function getStatsEmpresa(inicio, fin) {
   } catch (e) { return []; }
 }
 
-function getReportData(inicio, fin, evaluadorFiltro) {
+function getReportData(inicio, fin, regionalFiltro) {
   try {
     const userInit = getInitData();
     if (userInit.error) return [];
@@ -481,7 +511,7 @@ function getReportData(inicio, fin, evaluadorFiltro) {
     const iLink = headers.indexOf('LinkRepoteFinal');
     const iEvaluador = headers.indexOf('Evaluador'); 
     const iRegional = headers.indexOf('Regional');
-    const iEmpresa = headers.indexOf('Empresa'); // 🔴 MEJORA: Buscar la columna Empresa
+    const iEmpresa = headers.indexOf('Empresa');
 
     const d1 = new Date(inicio + "T00:00:00"); 
     const d2 = new Date(fin + "T23:59:59");
@@ -489,11 +519,11 @@ function getReportData(inicio, fin, evaluadorFiltro) {
     const filtrados = data.slice(1).filter(r => {
       const fechaRow = new Date(r[iFecha]);
       const userRow = (r[iUser] || "").toString().toLowerCase();
-      const evalRow = iEvaluador > -1 ? (r[iEvaluador] || "").toString().trim() : "";
+      const regRow = iRegional > -1 ? (r[iRegional] || "").toString().trim() : "";
       const enFecha = fechaRow >= d1 && fechaRow <= d2;
       
       if (userRole === 'Administrador' || userRole === 'UsuarioAdministrador') {
-        if (evaluadorFiltro && evaluadorFiltro !== 'TODOS' && evalRow !== evaluadorFiltro) {
+        if (regionalFiltro && regionalFiltro !== 'TODOS' && regRow !== regionalFiltro) {
           return false;
         }
         return enFecha;
