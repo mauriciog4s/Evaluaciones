@@ -11,8 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <!-- NUEVO: Librería de Excel SheetJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -48,7 +46,6 @@
       transition: all 0.4s ease;
     }
 
-    /* Skeleton Loading Animation */
     .skeleton-row {
       height: 20px;
       background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -57,8 +54,6 @@
       border-radius: 4px;
     }
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    
-    /* Animación extra para la burbuja */
     @keyframes bounceIn {
       0% { transform: scale(0); opacity: 0; }
       50% { transform: scale(1.2); opacity: 1; }
@@ -108,12 +103,12 @@
     <section id="sec-inicio" class="hidden animate__animated animate__fadeIn">
       <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tight">Resumen General</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col">
            <div class="flex justify-between items-center mb-4">
              <h3 class="font-bold text-gray-700">Distribución de Calificaciones (1-5)</h3>
              <span id="stat-total-badge" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">Total: 0</span>
            </div>
-           <div class="h-64 relative flex justify-center">
+           <div class="h-64 relative flex justify-center w-full">
              <canvas id="myChart"></canvas>
            </div>
         </div>
@@ -138,16 +133,38 @@
               </div>
               <span class="material-icons ml-auto text-gray-300 group-hover:text-blue-600">chevron_right</span>
            </div>
-           <div class="quick-card bg-white p-6 rounded-2xl flex items-center gap-4 opacity-75">
-              <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
-                <span class="material-icons">help_outline</span>
-              </div>
-              <div>
-                <h4 class="font-bold text-gray-800">Soporte G4S</h4>
-                <p class="text-xs text-gray-500">Contactar Administrador</p>
-              </div>
-           </div>
         </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mt-6">
+         <h3 class="font-bold text-gray-700 mb-4">Cantidad de Evaluaciones por Regional</h3>
+         <div class="flex gap-4 mb-4 flex-wrap">
+           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="dash-start" class="border p-2 rounded-lg text-sm outline-none w-full"></div>
+           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="dash-end" class="border p-2 rounded-lg text-sm outline-none w-full"></div>
+          <div class="flex-grow max-w-[200px]">
+  <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+  <select id="dash-regional" class="border p-2 rounded-lg text-sm w-full outline-none bg-white focus:border-red-500 transition-colors">
+    <option value="TODOS">Todos</option>
+  </select>
+</div>
+           <button onclick="cargarTablaDashboard(); cargarTablaDashboardEmpresa();" class="bg-[#231f20] text-white px-6 py-2 rounded-lg text-xs font-bold uppercase mt-auto h-10 hover:bg-black transition">Consultar</button>
+         </div>
+         <div class="border rounded-xl overflow-hidden">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Regional</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
+              <tbody id="dash-regional-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros y consulte.</td></tbody>
+            </table>
+         </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mt-6 mb-8">
+         <h3 class="font-bold text-gray-700 mb-4">Cantidad de Evaluaciones por Empresa</h3>
+         <div class="border rounded-xl overflow-hidden">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Empresa</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
+              <tbody id="dash-empresa-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros arriba y consulte.</td></tbody>
+            </table>
+         </div>
       </div>
     </section>
 
@@ -170,11 +187,9 @@
                <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Cédula</small><span id="card-cedula" class="font-bold text-sm">-</span></div>
                <div class="bg-gray-50 p-3 rounded-xl"><small class="text-gray-400 font-bold uppercase block text-[10px]">Sucursal</small><span id="card-sucursal" class="font-bold text-sm">-</span></div>
              </div>
-             
              <div id="action-container">
                <button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span></button>
              </div>
-
            </div>
            <div class="text-center pb-6"><button onclick="resetSearch()" class="text-xs text-gray-400 font-bold hover:text-black">NUEVA BÚSQUEDA</button></div>
         </div>
@@ -182,19 +197,15 @@
     </section>
 
     <section id="sec-mis-evaluaciones" class="hidden">
-      <!-- HEADER CON BURBUJA ESTILO IPHONE -->
       <div class="flex items-center gap-3 mb-6">
         <h2 class="text-2xl font-black uppercase m-0">Mis Evaluaciones</h2>
-        <div id="badge-count" class="hidden items-center justify-center bg-[#c1272d] text-white text-[11px] font-bold h-6 min-w-[24px] px-2 rounded-full shadow-sm border-[1.5px] border-white z-10">
-          0
-        </div>
+        <div id="badge-count" class="hidden items-center justify-center bg-[#c1272d] text-white text-[11px] font-bold h-6 min-w-[24px] px-2 rounded-full shadow-sm border-[1.5px] border-white z-10">0</div>
       </div>
 
       <div class="bg-white p-4 rounded-xl border mb-6 flex gap-4 flex-wrap items-end shadow-sm">
         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
         
-        <!-- NUEVO: FILTRO DE EVALUADOR PARA ADMINS -->
         <div id="filter-evaluator-container" class="hidden min-w-[180px]">
           <label class="text-[10px] font-bold text-gray-400 uppercase">Evaluador</label>
           <select id="report-evaluator" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500">
@@ -203,7 +214,6 @@
         </div>
 
         <button onclick="cargarReportes()" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 hover:bg-black transition">Filtrar</button>
-        <!-- ACTUALIZADO: BOTÓN DE DESCARGA EXCEL -->
         <button onclick="descargarExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 hover:bg-green-700 ml-auto shadow-sm">
           <span class="material-icons text-sm">table_view</span> EXCEL
         </button>
@@ -211,14 +221,22 @@
 
       <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
         <table class="w-full text-left text-sm">
-            <!-- ACTUALIZADO: COLUMNA EVALUADOR -->
-            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Fecha</th><th class="p-4">Evaluador</th><th class="p-4">Evaluado</th><th class="p-4">Calificación (1-5)</th><th class="p-4">PDF</th></tr></thead>
-            <tbody id="report-body" class="divide-y"><tr><td colspan="5" class="p-8 text-center text-gray-400 italic">Cargando registros...</td></tr></tbody>
+            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
+               <tr>
+                 <th class="p-4">Fecha</th>
+                 <th class="p-4">Evaluador</th>
+                 <th class="p-4">Regional</th>
+                 <th class="p-4">Evaluado</th>
+                 <th class="p-4">Empresa</th>
+                 <th class="p-4">Calificación (1-5)</th>
+                 <th class="p-4">PDF</th>
+               </tr>
+            </thead>
+            <tbody id="report-body" class="divide-y"><tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Cargando registros...</td></tr></tbody>
         </table>
       </div>
     </section>
 
-    <!-- LAS DEMÁS SECCIONES SE MANTIENEN IGUAL -->
     <section id="sec-usuarios" class="hidden">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-black uppercase">Gestión Usuarios</h2>
@@ -231,15 +249,7 @@
           <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
             <tr><th class="p-4">Nombre</th><th class="p-4">Correo</th><th class="p-4">Rol</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr>
           </thead>
-          <tbody id="users-body" class="divide-y">
-             <tr>
-               <td class="p-4"><div class="skeleton-row w-3/4"></div></td>
-               <td class="p-4"><div class="skeleton-row w-1/2"></div></td>
-               <td class="p-4"><div class="skeleton-row w-1/4"></div></td>
-               <td class="p-4"><div class="skeleton-row w-20"></div></td>
-               <td class="p-4"><div class="skeleton-row w-10"></div></td>
-             </tr>
-          </tbody>
+          <tbody id="users-body" class="divide-y"></tbody>
         </table>
       </div>
     </section>
@@ -266,8 +276,7 @@
       <h2 class="text-2xl font-black mb-6 uppercase">Editor: Formulario Actualización</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-4" id="update-questions-list">
-          <!-- Lista de preguntas de actualización -->
-        </div>
+          </div>
         <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
            <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
            <button onclick="addUpdateQuestion()" class="w-full py-3 bg-[#c1272d] hover:bg-[#a01b20] transition text-white rounded-lg font-bold text-sm mb-4 flex justify-center gap-2 items-center">
@@ -331,7 +340,6 @@
 
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 mb-1">Preguntas (1-20)</p>
             <div class="flex justify-between border-b pb-1"><span class="text-gray-500">{{P1}} ... {{P20}}</span></div>
-
           </div>
         </div>
       </div>
@@ -339,60 +347,31 @@
 
   </div>
 
-  <!-- MODALS (Manteniendo todos iguales) -->
   <div id="modal-update-data" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
-    <div class="bg-white rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden relative animate__animated animate__fadeInUp">
-        
+    <div class="bg-white rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden relative">
         <div class="bg-[#231f20] p-5 border-b border-gray-800 flex justify-between items-center z-20 shrink-0">
             <div>
-              <h3 class="font-black text-white uppercase tracking-widest text-lg flex items-center gap-2">
-                <span class="material-icons text-[#c1272d]">verified_user</span> Actualización de Datos
-              </h3>
-              <p class="text-xs text-gray-400 mt-1">Política de Privacidad y Habeas Data G4S</p>
+              <h3 class="font-black text-white uppercase tracking-widest text-lg flex items-center gap-2"><span class="material-icons text-[#c1272d]">verified_user</span> Actualización de Datos</h3>
             </div>
             <button onclick="closeUpdateModal()" class="text-gray-400 hover:text-white transition"><span class="material-icons">close</span></button>
         </div>
-
         <div class="flex flex-col lg:flex-row flex-grow overflow-hidden">
-            
             <div class="w-full lg:w-1/3 bg-gray-50 p-6 overflow-y-auto border-r border-gray-200">
-               <div class="mb-6">
-                 <h4 class="font-bold text-gray-800 uppercase text-xs mb-3 border-b pb-2">Aviso Legal</h4>
-                 <p class="text-xs text-gray-600 text-justify leading-relaxed">
-                   "Conozco la <strong>Ley de Habeas Data vigente</strong>, la cual, reconoce el derecho de todas las personas a conocer, actualizar y rectificar la información que suministren a bases de datos susceptibles de tratamiento.
-                 </p>
-                 <p class="text-xs text-gray-600 text-justify leading-relaxed mt-2">
-                   Conozco a su vez la Política de Habeas data de G4S, en donde se indican los canales para ejercer mis derechos y por lo tanto <strong>autorizo la recopilación y actualización</strong> que con este formulario se efectúa."
-                 </p>
-               </div>
-
-               <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+               <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mt-4">
                   <div class="flex items-start gap-2">
                     <span class="material-icons text-yellow-600 text-sm mt-0.5">info</span>
                     <div>
                       <h5 class="font-bold text-yellow-800 text-[10px] uppercase">Requisito Obligatorio</h5>
-                      <p class="text-[10px] text-yellow-700 leading-tight mt-1">
-                        Debe completar el formulario adjunto para desbloquear el acceso a la evaluación de desempeño.
-                      </p>
+                      <p class="text-[10px] text-yellow-700 leading-tight mt-1">Complete para desbloquear la evaluación de desempeño.</p>
                     </div>
                   </div>
                </div>
             </div>
-
             <div class="w-full lg:w-2/3 bg-white relative flex flex-col">
-               <div id="loader-update" class="absolute inset-0 flex items-center justify-center bg-white z-10">
-                 <span class="material-icons animate-spin text-gray-300">sync</span>
-               </div>
-               
+               <div id="loader-update" class="absolute inset-0 flex items-center justify-center bg-white z-10"><span class="material-icons animate-spin text-gray-300">sync</span></div>
                <iframe id="frame-update" class="w-full flex-grow border-0" onload="handleIframeLoad()"></iframe>
-               
                <div class="p-4 border-t bg-gray-50 flex justify-between items-center shrink-0">
-                 <span class="text-[10px] text-gray-400 uppercase font-bold">Paso 1 de 2</span>
-                 
-                 <button id="btn-continue-update" onclick="abrirFormularioEvaluacionReal()" disabled 
-                    class="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-lg font-bold uppercase text-xs shadow-none flex items-center gap-2 transition-all">
-                   <span class="material-icons text-sm">lock</span> Complete el formulario...
-                 </button>
+                 <button id="btn-continue-update" onclick="abrirFormularioEvaluacionReal()" disabled class="bg-gray-300 text-gray-500 cursor-not-allowed px-6 py-3 rounded-lg font-bold uppercase text-xs shadow-none flex items-center gap-2 transition-all"><span class="material-icons text-sm">lock</span> Complete el formulario...</button>
                </div>
             </div>
         </div>
@@ -400,43 +379,35 @@
   </div>
 
   <div id="modal-form-embed" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[3000] p-4">
-    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border overflow-hidden relative">
         <div class="bg-white p-4 border-b flex justify-between items-center z-20"><h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3><button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button></div>
-        <div class="flex-grow overflow-hidden relative bg-gray-50"><div id="form-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-white"><div class="flex flex-col items-center"><div class="w-10 h-10 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-2"></div><span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Iniciando...</span></div></div><iframe id="gform-frame" src="" class="w-full h-full border-0" onload="document.getElementById('form-loader').classList.add('hidden')"></iframe></div>
+        <div class="flex-grow overflow-hidden relative bg-gray-50"><div id="form-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-white"><div class="w-10 h-10 border-4 border-gray-100 border-t-[#c1272d] rounded-full animate-spin mb-2"></div></div><iframe id="gform-frame" src="" class="w-full h-full border-0" onload="document.getElementById('form-loader').classList.add('hidden')"></iframe></div>
     </div>
   </div>
 
   <div id="modal-pdf-preview" class="fixed inset-0 glass-overlay hidden items-center justify-center z-[4000] p-4">
-    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border border-white/20 overflow-hidden relative animate__animated animate__zoomIn animate__faster">
+    <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl overflow-hidden relative">
         <div class="bg-white p-4 border-b flex justify-between items-center z-20">
-          <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-            <span class="material-icons text-[#c1272d]">picture_as_pdf</span> Reporte de Evaluación
-          </h3>
-          <button onclick="document.getElementById('modal-pdf-preview').classList.add('hidden')" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90">
-            <span class="material-icons">close</span>
-          </button>
+          <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">Reporte de Evaluación</h3>
+          <button onclick="document.getElementById('modal-pdf-preview').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full"><span class="material-icons">close</span></button>
         </div>
-        <div class="flex-grow overflow-hidden relative bg-gray-50">
-          <iframe id="pdf-preview-frame" src="" class="w-full h-full border-0"></iframe>
-        </div>
+        <div class="flex-grow overflow-hidden bg-gray-50"><iframe id="pdf-preview-frame" src="" class="w-full h-full border-0"></iframe></div>
     </div>
   </div>
 
   <div id="modal-user" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[2000] p-4">
-    <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
       <div class="flex items-center gap-3 mb-6">
-        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-          <span class="material-icons">person_add</span>
-        </div>
+        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600"><span class="material-icons">person_add</span></div>
         <h3 id="modal-user-title" class="font-black text-xl uppercase tracking-tight">Usuario</h3>
       </div>
       
       <form id="form-user" onsubmit="saveUser(event)" class="space-y-4">
         <input type="hidden" id="u-action"><input type="hidden" id="u-row">
         
-        <div>
-          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre Completo</label>
-          <input id="u-nombre" placeholder="Ej: Mauricio Gaitan" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500 transition-colors" required>
+        <div id="container-nombre" class="hidden">
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre (Opcional si tiene fórmula)</label>
+          <input id="u-nombre" placeholder="Nombre completo" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
         </div>
 
         <div>
@@ -447,25 +418,21 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Rol</label>
-            <select id="u-rol" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none bg-white focus:border-red-500 transition-colors">
-              <option>Administrador</option>
-              <option>Evaluador</option>
-              <option>UsuarioAdministrador</option>
-              <option>Usuario</option>
+            <select id="u-rol" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
+              <option>Administrador</option><option>Evaluador</option><option>UsuarioAdministrador</option><option>Usuario</option>
             </select>
           </div>
           <div>
             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Estado</label>
-            <select id="u-estado" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none bg-white focus:border-red-500 transition-colors">
-              <option>Activo</option>
-              <option>Inactivo</option>
+            <select id="u-estado" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
+              <option>Activo</option><option>Inactivo</option>
             </select>
           </div>
         </div>
 
         <div class="flex gap-3 pt-6">
-          <button type="button" onclick="document.getElementById('modal-user').classList.add('hidden')" class="flex-1 py-3 text-gray-500 font-bold text-xs uppercase hover:bg-gray-100 rounded-xl transition-all">Cancelar</button>
-          <button type="submit" id="btn-save-user" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+          <button type="button" onclick="document.getElementById('modal-user').classList.add('hidden')" class="flex-1 py-3 text-gray-500 font-bold text-xs uppercase hover:bg-gray-100 rounded-xl">Cancelar</button>
+          <button type="submit" id="btn-save-user" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-red-700 flex items-center justify-center gap-2">
             <span id="btn-save-text">Guardar</span>
             <span id="btn-save-loader" class="hidden material-icons animate-spin text-sm">sync</span>
           </button>
@@ -483,26 +450,17 @@
     let updateFormLoads = 0; 
 
     function aplicarPermisos(role) {
+      const userRole = role ? role.trim() : 'Usuario';
       const permissions = {
         'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
         'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
         'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
         'Usuario': ['m-mis-evaluaciones']
       };
-
-      const myPermissions = permissions[role] || ['m-mis-evaluaciones']; 
-      
+      const myPermissions = permissions[userRole] || ['m-mis-evaluaciones']; 
       const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
-      allItems.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-      });
-
-      myPermissions.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('hidden');
-      });
-
+      allItems.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+      myPermissions.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
       if (myPermissions.includes('m-inicio')) nav('inicio');
       else if (myPermissions.includes('m-usuarios')) nav('usuarios');
       else nav('mis-evaluaciones');
@@ -514,43 +472,40 @@
           .withSuccessHandler(data => {
              const loader = document.getElementById('system-loader');
              if(data.error) {
-               loader.innerHTML = `<div class="text-center p-8"><h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3><p class="text-sm text-slate-500 mb-6">${data.message}</p><a href="https://accounts.google.com/Logout" class="bg-slate-900 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase hover:bg-black transition">Cerrar Sesión</a></div>`;
+               loader.innerHTML = `<div class="text-center p-8"><h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3><p class="text-sm text-slate-500">${data.message}</p></div>`;
                return; 
              }
-
              appData = data;
              loader.classList.add('loader-hidden');
              setTimeout(() => loader.style.display = 'none', 500);
 
              document.getElementById('user-email-display').innerText = data.email;
              document.getElementById('user-role-display').innerText = data.role;
-             
              aplicarPermisos(data.role);
 
-             // --- NUEVO: POBLAR DROPDOWN SI ES ADMIN ---
              if (data.isAdmin && data.evaluadores && data.evaluadores.length > 0) {
-                const container = document.getElementById('filter-evaluator-container');
                 const select = document.getElementById('report-evaluator');
-                container.classList.remove('hidden'); // Mostrar el filtro
-                
+                document.getElementById('filter-evaluator-container').classList.remove('hidden');
                 data.evaluadores.forEach(ev => {
                     const opt = document.createElement('option');
-                    opt.value = ev;
-                    opt.innerText = ev;
+                    opt.value = ev; opt.innerText = ev;
                     select.appendChild(opt);
                 });
              }
-
              if(data.dashboard && (data.role === 'Administrador' || data.role === 'Evaluador')) {
+                if (data.regionales && data.regionales.length > 0) {
+                    const selectReg = document.getElementById('dash-regional');
+                    data.regionales.forEach(reg => {
+                        const opt = document.createElement('option');
+                        opt.value = reg; 
+                        opt.innerText = reg;
+                        selectReg.appendChild(opt);
+                    });
+                }
                 renderDashboard(data.dashboard);
              }
           })
           .getInitData();
-      } else {
-        const loader = document.getElementById('system-loader');
-        if (loader) {
-          loader.innerHTML = `<div class="text-center p-8"><h3 class="text-xl font-bold text-slate-800 mb-2">Modo Vista Previa</h3><p class="text-sm text-slate-500 mb-6">Ejecute desde Google Apps Script.</p></div>`;
-        }
       }
     }
 
@@ -573,6 +528,55 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } } } }
             });
         }
+        const date = new Date();
+        const fDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+        const lDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+        document.getElementById('dash-start').value = fDay;
+        document.getElementById('dash-end').value = lDay;
+        cargarTablaDashboard();
+        cargarTablaDashboardEmpresa(); // MEJORA: Llenar la nueva tabla de empresas
+    }
+
+    function cargarTablaDashboard() {
+       const ini = document.getElementById('dash-start').value;
+       const fin = document.getElementById('dash-end').value;
+       const reg = document.getElementById('dash-regional').value;
+       document.getElementById('dash-regional-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-500 animate-pulse">Consultando...</td></tr>`;
+       google.script.run.withSuccessHandler(res => {
+         if(!res || res.length === 0) {
+           document.getElementById('dash-regional-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-400">Sin datos para este periodo.</td></tr>`;
+           return;
+         }
+         let html = res.map(item => `
+           <tr class="hover:bg-gray-50 border-b transition">
+             <td class="p-4 font-bold text-gray-700 text-xs">${item.regional}</td>
+             <td class="p-4 text-right"><span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg font-black text-xs">${item.cantidad}</span></td>
+           </tr>
+         `).join('');
+         document.getElementById('dash-regional-body').innerHTML = html;
+       }).getStatsRegional(ini, fin, reg);
+    }
+
+    // MEJORA: Nueva función para renderizar la tabla de Empresas
+    function cargarTablaDashboardEmpresa() {
+       const ini = document.getElementById('dash-start').value;
+       const fin = document.getElementById('dash-end').value;
+       
+       document.getElementById('dash-empresa-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-500 animate-pulse">Consultando...</td></tr>`;
+       
+       google.script.run.withSuccessHandler(res => {
+         if(!res || res.length === 0) {
+           document.getElementById('dash-empresa-body').innerHTML = `<tr><td colspan="2" class="p-4 text-center text-xs text-gray-400">Sin datos para este periodo.</td></tr>`;
+           return;
+         }
+         let html = res.map(item => `
+           <tr class="hover:bg-gray-50 border-b transition">
+             <td class="p-4 font-bold text-gray-700 text-xs">${item.empresa}</td>
+             <td class="p-4 text-right"><span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg font-black text-xs">${item.cantidad}</span></td>
+           </tr>
+         `).join('');
+         document.getElementById('dash-empresa-body').innerHTML = html;
+       }).getStatsEmpresa(ini, fin);
     }
 
     function nav(id) {
@@ -608,9 +612,7 @@
       
       google.script.run.withSuccessHandler(res => {
          btn.innerHTML = originalText; btn.disabled = false;
-         
          if(!res.found) return Swal.fire('No encontrado', 'Cédula no existe', 'warning');
-         
          currentEmployee = res.data;
          document.getElementById('card-nombre').innerText = res.data.nombre;
          document.getElementById('card-cargo').innerText = res.data.cargo;
@@ -620,38 +622,12 @@
          document.getElementById('result-card').classList.remove('hidden');
 
          const container = document.getElementById('action-container');
-         
          if (res.existingEvaluation && res.existingEvaluation.exists) {
             const ev = res.existingEvaluation;
-            container.innerHTML = `
-              <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div class="flex items-start gap-3">
-                  <span class="material-icons text-red-600 mt-1">warning</span>
-                  <div>
-                    <h4 class="font-bold text-red-800 text-sm uppercase">Ya evaluado en ${ev.year}</h4>
-                    <p class="text-xs text-red-700 mt-1">Este colaborador ya tiene un registro.</p>
-                    
-                    <div class="mt-3 text-xs bg-white p-3 rounded border border-red-100">
-                      <p><strong>Fecha:</strong> ${ev.fecha}</p>
-                      <p><strong>Evaluador:</strong> ${ev.evaluador}</p>
-                      <p><strong>Resultado:</strong> ${ev.resultado}</p>
-                    </div>
-
-                    <button onclick="verPdfExistente('${ev.pdfLink}')" class="mt-3 w-full bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-700 flex items-center justify-center gap-2">
-                      <span class="material-icons text-sm">picture_as_pdf</span> Ver Reporte
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
+            container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4"><div class="flex items-start gap-3"><span class="material-icons text-red-600 mt-1">warning</span><div><h4 class="font-bold text-red-800 text-sm uppercase">Ya evaluado en ${ev.year}</h4><p class="text-xs text-red-700 mt-1">Este colaborador ya tiene un registro.</p><button onclick="verPdfExistente('${ev.pdfLink}')" class="mt-3 w-full bg-red-600 text-white py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-700">Ver Reporte</button></div></div></div>`;
          } else {
-            container.innerHTML = `
-              <button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2">
-                <span>Iniciar Formulario</span> <span class="material-icons text-sm">open_in_new</span>
-              </button>
-            `;
+            container.innerHTML = `<button onclick="iniciarProcesoEvaluacion()" class="w-full py-4 bg-[#c1272d] text-white rounded-xl font-bold uppercase shadow-lg hover:bg-[#a01b20] flex justify-center gap-2"><span>Iniciar Formulario</span></button>`;
          }
-
       }).buscarEmpleado(cedula);
     }
 
@@ -666,7 +642,6 @@
         document.getElementById('result-card').classList.add('hidden'); 
         document.getElementById('search-box').classList.remove('hidden'); 
         document.getElementById('input-cedula').value = ''; 
-        document.getElementById('action-container').innerHTML = '';
     }
 
     function iniciarProcesoEvaluacion() {
@@ -683,13 +658,11 @@
           .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre));
 
       if(!urlUpdate.includes('embedded=true')) urlUpdate += '&embedded=true';
-
       document.getElementById('loader-update').classList.remove('hidden');
       document.getElementById('frame-update').src = urlUpdate;
       
       const modal = document.getElementById('modal-update-data');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
     }
     
     function handleIframeLoad() {
@@ -698,9 +671,9 @@
       if (updateFormLoads > 1) {
          const btn = document.getElementById('btn-continue-update');
          btn.disabled = false;
-         btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'shadow-none');
+         btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
          btn.classList.add('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
-         btn.innerHTML = 'CONTINUAR A EVALUACIÓN <span class="material-icons text-sm">arrow_forward</span>';
+         btn.innerHTML = 'CONTINUAR A EVALUACIÓN';
       }
     }
 
@@ -720,37 +693,32 @@
         .replace('{{EMAIL}}', encodeURIComponent(currentEmployee.email))
         .replace('{{REGIONAL}}', encodeURIComponent(currentEmployee.regional || ''))
         .replace('{{LINEA_NEGOCIO}}', encodeURIComponent(currentEmployee.lineaNegocio || ''))
-        .replace('{{DISPOSITIVO}}', encodeURIComponent(currentEmployee.dispositivo || ''));
+        .replace('{{DISPOSITIVO}}', encodeURIComponent(currentEmployee.dispositivo || ''))
+        .replace('{{NOMBRE_EVALUADOR}}', encodeURIComponent(appData.userName || ''));
 
       if(!url.includes('embedded=true')) url += '&embedded=true';
-      const modal = document.getElementById('modal-form-embed');
-      const iframe = document.getElementById('gform-frame');
-      iframe.src = url;
+      document.getElementById('gform-frame').src = url;
       document.getElementById('form-loader').classList.remove('hidden'); 
+      const modal = document.getElementById('modal-form-embed');
       modal.classList.remove('hidden'); modal.classList.add('flex');
     }
 
     function closeFormModal() { document.getElementById('modal-form-embed').classList.add('hidden'); document.getElementById('gform-frame').src = 'about:blank'; }
 
-    // --- ACTUALIZADO: CARGA REPORTE CON FILTRO Y ACTUALIZACIÓN DE BURBUJA ---
     function cargarReportes() {
       const i = document.getElementById('report-start').value;
       const f = document.getElementById('report-end').value;
-      const evalFiltro = document.getElementById('report-evaluator').value; // Filtro de evaluador
+      const evalFiltro = document.getElementById('report-evaluator').value; 
       
       if(!i || !f || typeof google === 'undefined') return;
+      document.getElementById('report-body').innerHTML = '<tr><td colspan="7" class="p-8 text-center animate-pulse">Cargando...</td></tr>';
       
-      document.getElementById('report-body').innerHTML = '<tr><td colspan="5" class="p-8 text-center animate-pulse">Cargando...</td></tr>';
-      
-      // Ocultar burbuja mientras carga
       const badge = document.getElementById('badge-count');
       badge.classList.add('hidden');
       badge.classList.remove('animate-badge');
       
       google.script.run.withSuccessHandler(rows => {
          reportData = rows;
-         
-         // Actualizar burbuja tipo iOS
          badge.innerText = rows.length;
          badge.classList.remove('hidden');
          badge.classList.add('flex', 'animate-badge');
@@ -770,38 +738,26 @@
            const mainRow = `
              <tr class="hover:bg-gray-50 transition border-b group">
                <td class="p-4 text-gray-600">${r.fecha}</td>
-               <td class="p-4 text-xs font-semibold text-gray-500">${r.evaluador}</td> <!-- Nueva Columna -->
+               <td class="p-4 text-xs font-semibold text-gray-500">${r.evaluador}</td>
+               <td class="p-4 text-xs font-semibold text-gray-500">${r.regional}</td>
                <td class="p-4 font-bold text-gray-800">${r.nombre}</td>
-               <td class="p-4">
-                 <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${colorClass}">
-                   ${r.resultado} / 5
-                 </span>
-               </td>
-               <td class="p-4">
-                 <button onclick="togglePdf(${index}, '${r.embedLink}')" class="text-[#c1272d] font-bold text-xs uppercase hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors border border-transparent hover:border-red-100">
-                   <span class="material-icons text-sm">visibility</span> Ver PDF
-                 </button>
-               </td>
+               <td class="p-4 text-xs font-semibold text-gray-500">${r.empresa}</td>
+               <td class="p-4"><span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${colorClass}">${r.resultado} / 5</span></td>
+               <td class="p-4"><button onclick="togglePdf(${index}, '${r.embedLink}')" class="text-[#c1272d] font-bold text-xs uppercase hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-2">Ver PDF</button></td>
              </tr>
            `;
            const hiddenRow = `
              <tr id="pdf-row-${index}" class="hidden bg-gray-50 border-b">
-               <td colspan="5" class="p-4">
+               <td colspan="7" class="p-4">
                  <div class="bg-white rounded-xl border shadow-inner overflow-hidden relative" style="height: 600px;">
-                    <div id="loader-${index}" class="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-                      <div class="flex flex-col items-center">
-                        <span class="material-icons animate-spin text-gray-400 mb-2">sync</span>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">Cargando Documento...</span>
-                      </div>
-                    </div>
-                    <iframe id="frame-${index}" class="w-full h-full border-0" onload="document.getElementById('loader-${index}').classList.add('hidden')"></iframe>
+                    <iframe id="frame-${index}" class="w-full h-full border-0"></iframe>
                  </div>
                </td>
              </tr>
            `;
            return mainRow + hiddenRow;
          }).join('');
-         document.getElementById('report-body').innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
+         document.getElementById('report-body').innerHTML = html || '<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
       }).getReportData(i, f, evalFiltro);
     }
 
@@ -809,17 +765,18 @@
       const row = document.getElementById(`pdf-row-${index}`);
       const frame = document.getElementById(`frame-${index}`);
       document.querySelectorAll('tr[id^="pdf-row-"]').forEach(r => { if(r.id !== `pdf-row-${index}`) r.classList.add('hidden'); });
-      if (row.classList.contains('hidden')) { row.classList.remove('hidden'); if (!frame.src || frame.src === 'about:blank' || frame.src === '') { frame.src = url; } } else { row.classList.add('hidden'); }
+      if (row.classList.contains('hidden')) { row.classList.remove('hidden'); if (!frame.src || frame.src === 'about:blank') { frame.src = url; } } else { row.classList.add('hidden'); }
     }
     
-    // --- NUEVO: FUNCIÓN PARA DESCARGAR EN EXCEL REAL (.XLSX) ---
     function descargarExcel() {
       if(!reportData.length) return Swal.fire('Info', 'No hay datos para exportar', 'info');
       try {
         const wsData = reportData.map(r => ({
           'FECHA': r.fecha,
           'EVALUADOR': r.evaluador,
+          'REGIONAL': r.regional,
           'EVALUADO': r.nombre,
+          'EMPRESA': r.empresa,
           'CÉDULA': r.cedula,
           'CALIFICACIÓN': r.resultado,
           'LINK PDF': r.link
@@ -828,16 +785,12 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Reporte_Evaluaciones");
         XLSX.writeFile(wb, "Reporte_Evaluaciones_G4S.xlsx");
-      } catch (e) {
-        console.error(e);
-        Swal.fire('Error', 'No se pudo generar el archivo Excel.', 'error');
-      }
+      } catch (e) { Swal.fire('Error', 'No se pudo generar el archivo Excel.', 'error'); }
     }
 
     function loadUsers() {
       if(typeof google === 'undefined') return;
-      const skeletonHtml = `<tr>${'<td class="p-4"><div class="skeleton-row w-full"></div></td>'.repeat(5)}</tr>`.repeat(3);
-      document.getElementById('users-body').innerHTML = skeletonHtml;
+      document.getElementById('users-body').innerHTML = `<tr><td colspan="5" class="p-4 text-center">Cargando...</td></tr>`;
       google.script.run.withSuccessHandler(users => {
          usersList = users;
          const html = users.map(u => `
@@ -846,20 +799,31 @@
               <td class="p-4 text-xs text-gray-500">${u.correo}</td>
               <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
               <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td>
-              <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"><span class="material-icons text-sm">delete</span></button></div></td>
+              <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 text-red-600"><span class="material-icons text-sm">delete</span></button></div></td>
             </tr>`).join('');
-         document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No hay usuarios registrados.</td></tr>';
+         document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="text-center p-8 text-gray-400">Sin usuarios</td></tr>';
       }).getUsersData();
     }
+
     function modalUsuario(action, row = null) {
       const modal = document.getElementById('modal-user');
       modal.classList.remove('hidden'); modal.classList.add('flex');
       document.getElementById('u-action').value = action; document.getElementById('u-row').value = row || ''; document.getElementById('form-user').reset();
+      
+      const contNombre = document.getElementById('container-nombre');
+      if(action === 'CREATE') {
+         contNombre.classList.add('hidden');
+         document.getElementById('modal-user-title').innerText = 'Nuevo Usuario';
+      } else {
+         contNombre.classList.remove('hidden');
+         document.getElementById('modal-user-title').innerText = 'Editar Usuario';
+         const u = usersList.find(x => x.row === row);
+         if(u) { document.getElementById('u-nombre').value = u.nombre; document.getElementById('u-correo').value = u.correo; document.getElementById('u-rol').value = u.rol; document.getElementById('u-estado').value = u.estado; }
+      }
       const btn = document.getElementById('btn-save-user'); const loader = document.getElementById('btn-save-loader'); const btnText = document.getElementById('btn-save-text');
       btn.disabled = false; btn.classList.remove('opacity-70'); loader.classList.add('hidden'); btnText.innerText = 'Guardar';
-      document.getElementById('modal-user-title').innerText = action === 'CREATE' ? 'Nuevo Usuario' : 'Editar Usuario';
-      if(action === 'UPDATE' && row) { const u = usersList.find(x => x.row === row); if(u) { document.getElementById('u-nombre').value = u.nombre; document.getElementById('u-correo').value = u.correo; document.getElementById('u-rol').value = u.rol; document.getElementById('u-estado').value = u.estado; } }
     }
+
     function editUser(row) { modalUsuario('UPDATE', row); }
     function saveUser(e) { 
       e.preventDefault(); if(typeof google === 'undefined') return; 
@@ -868,10 +832,12 @@
       google.script.run.withSuccessHandler(() => { document.getElementById('modal-user').classList.add('hidden'); loadUsers(); Swal.fire('Guardado', '', 'success'); }).saveUser(document.getElementById('u-action').value, { row: document.getElementById('u-row').value, nombre: document.getElementById('u-nombre').value, correo: document.getElementById('u-correo').value, rol: document.getElementById('u-rol').value, estado: document.getElementById('u-estado').value }); 
     }
     function deleteUser(row) { Swal.fire({title:'¿Eliminar?', icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d'}).then(r => { if(r.isConfirmed) google.script.run.withSuccessHandler(loadUsers).saveUser('DELETE', {row: row}); }); }
+
     function loadQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">drag_indicator</span><span class="font-bold text-gray-800 text-sm">${q.title}</span></div><div class="flex gap-2"><button onclick="editQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay preguntas configuradas.</p>'; }).getFormStructure(); }
     function addQuestion() { Swal.fire({ title: 'Nueva Pregunta (Evaluación)', input: 'text', inputPlaceholder: 'Escriba la pregunta aquí...', showCancelButton: true, confirmButtonColor: '#231f20', cancelButtonText: 'Cancelar', confirmButtonText: 'Guardar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Guardando en Forms...', text: 'Por favor espere', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Agregada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('ADD', {title: r.value}); } }); }
     function delQuestion(id) { Swal.fire({ title: '¿Eliminar Pregunta?', text: "Esta acción borrará la pregunta del formulario oficial.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('DELETE', {id: id}); } }); }
     function editQuestion(id, currentTitle) { Swal.fire({ title: 'Editar Pregunta', input: 'text', inputValue: currentTitle, showCancelButton: true, confirmButtonColor: '#231f20', confirmButtonText: 'Actualizar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadQuestions(); Swal.fire({icon: 'success', title: 'Actualizada', timer: 1500, showConfirmButton: false}); }).modifyFormQuestion('UPDATE', {id: id, title: r.value}); } }); }
+    
     function loadUpdateQuestions() { if(typeof google === 'undefined') return; const skeletonCard = `<div class="bg-white p-4 rounded-xl border shadow-sm space-y-3"><div class="skeleton-row w-3/4 h-4"></div><div class="flex justify-end gap-2"><div class="skeleton-row w-8 h-8 rounded"></div><div class="skeleton-row w-8 h-8 rounded"></div></div></div>`; document.getElementById('update-questions-list').innerHTML = skeletonCard.repeat(3); google.script.run.withSuccessHandler(list => { if (list.length > 0 && list[0].id === 0) { document.getElementById('update-questions-list').innerHTML = `<p class="text-red-500 font-bold text-center p-4">${list[0].title}</p>`; return; } const html = list.map(q => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm hover:shadow-md transition"><div class="flex items-center gap-3"><span class="material-icons text-gray-300 text-sm">short_text</span><div><span class="font-bold text-gray-800 text-sm block">${q.title}</span><span class="text-[10px] text-gray-400 uppercase font-bold">${q.type}</span></div></div><div class="flex gap-2"><button onclick="editUpdateQuestion('${q.id}', '${q.title}')" class="p-2 bg-blue-50 hover:bg-blue-100 rounded transition text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="delUpdateQuestion('${q.id}')" class="p-2 bg-red-50 hover:bg-red-100 rounded transition text-red-600"><span class="material-icons text-sm">delete</span></button></div></div>`).join(''); document.getElementById('update-questions-list').innerHTML = html || '<p class="text-gray-400 italic text-center p-4">No hay campos configurados.</p>'; }).getUpdateFormStructure(); }
     function addUpdateQuestion() { Swal.fire({ title: 'Nuevo Campo de Texto', input: 'text', inputPlaceholder: 'Ej: Teléfono de Emergencia', showCancelButton: true, confirmButtonColor: '#c1272d', cancelButtonText: 'Cancelar', confirmButtonText: 'Agregar' }).then(r => { if(r.isConfirmed && r.value) { Swal.fire({ title: 'Agregando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Campo Agregado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('ADD', {title: r.value}); } }); }
     function delUpdateQuestion(id) { Swal.fire({ title: '¿Eliminar Campo?', text: "Se borrará este campo del formulario de actualización.", icon:'warning', showCancelButton:true, confirmButtonColor: '#c1272d', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(r => { if(r.isConfirmed) { Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); google.script.run.withSuccessHandler(() => { Swal.close(); loadUpdateQuestions(); Swal.fire({icon: 'success', title: 'Eliminado', timer: 1500, showConfirmButton: false}); }).modifyUpdateFormQuestion('DELETE', {id: id}); } }); }
