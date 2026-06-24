@@ -199,41 +199,41 @@
     <section id="sec-mis-evaluaciones" class="hidden">
       <div class="flex items-center gap-3 mb-6">
         <h2 class="text-2xl font-black uppercase m-0">Mis Evaluaciones</h2>
-        <div id="badge-count" class="hidden items-center justify-center bg-[#c1272d] text-white text-[11px] font-bold h-6 min-w-[24px] px-2 rounded-full shadow-sm border-[1.5px] border-white z-10">0</div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border mb-6 flex gap-4 flex-wrap items-end shadow-sm">
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500"></div>
+      <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
         
-        <div id="filter-evaluator-container" class="hidden min-w-[180px]">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Evaluador</label>
-          <select id="report-evaluator" class="border p-2 rounded-lg text-sm w-full outline-none focus:border-red-500">
-            <option value="TODOS">Todos</option>
+        <div class="min-w-[180px]">
+          <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+          <select id="report-regional" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
+            <option value="TODOS">Todas las Regionales</option>
           </select>
         </div>
 
-        <button onclick="cargarReportes()" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 hover:bg-black transition">Filtrar</button>
-        <button onclick="descargarExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 hover:bg-green-700 ml-auto shadow-sm">
-          <span class="material-icons text-sm">table_view</span> EXCEL
+        <button onclick="prepararDescarga()" class="bg-[#231f20] text-white px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 hover:bg-black transition-all shadow-md flex items-center gap-2">
+           <span class="material-icons text-sm">settings</span> Preparar Descarga
         </button>
       </div>
 
-      <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
-               <tr>
-                 <th class="p-4">Fecha</th>
-                 <th class="p-4">Evaluador</th>
-                 <th class="p-4">Regional</th>
-                 <th class="p-4">Evaluado</th>
-                 <th class="p-4">Empresa</th>
-                 <th class="p-4">Calificación (1-5)</th>
-                 <th class="p-4">PDF</th>
-               </tr>
-            </thead>
-            <tbody id="report-body" class="divide-y"><tr><td colspan="7" class="p-8 text-center text-gray-400 italic">Cargando registros...</td></tr></tbody>
-        </table>
+      <div id="download-ready-container" class="hidden animate__animated animate__bounceIn">
+         <div class="bg-white p-10 rounded-3xl border-2 border-dashed border-green-200 flex flex-col items-center text-center shadow-sm">
+            <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-4">
+               <span class="material-icons text-4xl">check_circle</span>
+            </div>
+            <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">¡Informe Preparado!</h3>
+            <p class="text-gray-500 text-sm mb-6 max-w-xs">Los datos han sido procesados y están listos para ser descargados en formato Excel.</p>
+
+            <button onclick="descargarExcel()" class="group bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-xl hover:shadow-green-200/50 transition-all flex items-center gap-3">
+              <span class="material-icons text-xl group-hover:scale-110 transition-transform">download</span>
+              Descargar Informe Final
+            </button>
+
+            <div id="download-count-badge" class="mt-4 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+               0 REGISTROS ENCONTRADOS
+            </div>
+         </div>
       </div>
     </section>
 
@@ -483,30 +483,36 @@
              document.getElementById('user-role-display').innerText = data.role;
              aplicarPermisos(data.role);
 
-             if (data.isAdmin && data.evaluadores && data.evaluadores.length > 0) {
-                const select = document.getElementById('report-evaluator');
-                document.getElementById('filter-evaluator-container').classList.remove('hidden');
-                data.evaluadores.forEach(ev => {
-                    const opt = document.createElement('option');
-                    opt.value = ev; opt.innerText = ev;
-                    select.appendChild(opt);
-                });
-             }
-             if(data.dashboard && (data.role === 'Administrador' || data.role === 'Evaluador')) {
-                if (data.regionales && data.regionales.length > 0) {
-                    const selectReg = document.getElementById('dash-regional');
-                    data.regionales.forEach(reg => {
-                        const opt = document.createElement('option');
-                        opt.value = reg; 
-                        opt.innerText = reg;
-                        selectReg.appendChild(opt);
-                    });
-                }
-                renderDashboard(data.dashboard);
-             }
+             // CARGA LAZY DE DATOS PESADOS
+             cargarDatosLazy();
           })
           .getInitData();
       }
+    }
+
+    function cargarDatosLazy() {
+      google.script.run
+        .withSuccessHandler(data => {
+          if (data.error) return;
+
+          // Poblar filtros de Mis Evaluaciones (Regional)
+          if (data.regionales && data.regionales.length > 0) {
+            const selectReportReg = document.getElementById('report-regional');
+            const selectDashReg = document.getElementById('dash-regional');
+
+            data.regionales.forEach(reg => {
+              const opt = document.createElement('option');
+              opt.value = reg; opt.innerText = reg;
+              if (selectReportReg) selectReportReg.appendChild(opt.cloneNode(true));
+              if (selectDashReg) selectDashReg.appendChild(opt);
+            });
+          }
+
+          if(data.dashboard && (appData.role === 'Administrador' || appData.role === 'Evaluador')) {
+            renderDashboard(data.dashboard);
+          }
+        })
+        .getLazyData();
     }
 
     function renderDashboard(dash) {
@@ -595,7 +601,6 @@
           const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
           document.getElementById('report-start').value = firstDay;
           document.getElementById('report-end').value = lastDay;
-          cargarReportes();
       }
     }
 
@@ -705,60 +710,34 @@
 
     function closeFormModal() { document.getElementById('modal-form-embed').classList.add('hidden'); document.getElementById('gform-frame').src = 'about:blank'; }
 
-    function cargarReportes() {
+    function prepararDescarga() {
       const i = document.getElementById('report-start').value;
       const f = document.getElementById('report-end').value;
-      const evalFiltro = document.getElementById('report-evaluator').value; 
+      const regFiltro = document.getElementById('report-regional').value;
       
       if(!i || !f || typeof google === 'undefined') return;
-      document.getElementById('report-body').innerHTML = '<tr><td colspan="7" class="p-8 text-center animate-pulse">Cargando...</td></tr>';
-      
-      const badge = document.getElementById('badge-count');
-      badge.classList.add('hidden');
-      badge.classList.remove('animate-badge');
+
+      document.getElementById('download-ready-container').classList.add('hidden');
+
+      Swal.fire({
+        title: 'Procesando Informe',
+        html: 'Estamos extrayendo la información desde el servidor...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
       
       google.script.run.withSuccessHandler(rows => {
+         Swal.close();
          reportData = rows;
-         badge.innerText = rows.length;
-         badge.classList.remove('hidden');
-         badge.classList.add('flex', 'animate-badge');
 
-         const html = rows.map((r, index) => {
-           let colorClass = 'text-blue-600 bg-blue-50';
-           const val = parseInt(r.resultado);
-           
-           if(val === 5) colorClass = 'text-green-800 bg-green-100';
-           else if(val === 4) colorClass = 'text-green-600 bg-green-50';
-           else if(val === 3) colorClass = 'text-blue-600 bg-blue-50';
-           else if(val === 2) colorClass = 'text-yellow-600 bg-yellow-50';
-           else if(val === 1) colorClass = 'text-red-600 bg-red-50';
-           else if(r.resultado === 'E') colorClass = 'text-green-800 bg-green-100';
-           else if(r.resultado === 'D') colorClass = 'text-red-600 bg-red-50';
-           
-           const mainRow = `
-             <tr class="hover:bg-gray-50 transition border-b group">
-               <td class="p-4 text-gray-600">${r.fecha}</td>
-               <td class="p-4 text-xs font-semibold text-gray-500">${r.evaluador}</td>
-               <td class="p-4 text-xs font-semibold text-gray-500">${r.regional}</td>
-               <td class="p-4 font-bold text-gray-800">${r.nombre}</td>
-               <td class="p-4 text-xs font-semibold text-gray-500">${r.empresa}</td>
-               <td class="p-4"><span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold ${colorClass}">${r.resultado} / 5</span></td>
-               <td class="p-4"><button onclick="togglePdf(${index}, '${r.embedLink}')" class="text-[#c1272d] font-bold text-xs uppercase hover:bg-red-50 px-3 py-2 rounded-lg flex items-center gap-2">Ver PDF</button></td>
-             </tr>
-           `;
-           const hiddenRow = `
-             <tr id="pdf-row-${index}" class="hidden bg-gray-50 border-b">
-               <td colspan="7" class="p-4">
-                 <div class="bg-white rounded-xl border shadow-inner overflow-hidden relative" style="height: 600px;">
-                    <iframe id="frame-${index}" class="w-full h-full border-0"></iframe>
-                 </div>
-               </td>
-             </tr>
-           `;
-           return mainRow + hiddenRow;
-         }).join('');
-         document.getElementById('report-body').innerHTML = html || '<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">No hay registros.</td></tr>';
-      }).getReportData(i, f, evalFiltro);
+         if(!rows || rows.length === 0) {
+            return Swal.fire('Sin Datos', 'No se encontraron evaluaciones para el filtro seleccionado.', 'info');
+         }
+
+         document.getElementById('download-count-badge').innerText = `${rows.length} REGISTROS ENCONTRADOS`;
+         document.getElementById('download-ready-container').classList.remove('hidden');
+
+      }).getReportData(i, f, regFiltro);
     }
 
     function togglePdf(index, url) {
