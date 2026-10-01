@@ -58,7 +58,7 @@ function doGet(e) {
     .setTitle('G4S | Portal de Evaluación')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .setFaviconUrl('https://www.g4s.com/favicon.ico');
+    .setFaviconUrl('https://www.appsheet.com/template/gettablefileurl?appName=APPFOTOS-6147552&tableName=FOTO&fileName=FOTO_Images%2Ff6c7066e.FOTOGRAFIA.013116.jpg');
 }
 
 function getInitData() {
