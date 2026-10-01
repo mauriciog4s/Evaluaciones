@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#10253F">
   <title>Portal Evaluaciones G4S</title>
-  <link rel="icon" href="https://www.appsheet.com/template/gettablefileurl?appName=APPFOTOS-6147552&amp;tableName=FOTO&amp;fileName=FOTO_Images%2Ff6c7066e.FOTOGRAFIA.013116.jpg">
+  <link rel="icon" href="https://www.g4s.com/favicon.ico">
 
-  <!-- Tema (claro/oscuro) y estado del menú guardados: se aplican antes de pintar para evitar parpadeos -->
+  <!-- Estado guardado del menú (contraído/expandido). El portal siempre inicia en tema claro. -->
   <script>
     (function () {
-      var root = document.documentElement, theme = null;
       try {
-        theme = localStorage.getItem('g4s-theme');
-        if (localStorage.getItem('g4s-sidebar') === 'collapsed') root.classList.add('sb-collapsed');
+        if (localStorage.getItem('g4s-sidebar') === 'collapsed') document.documentElement.classList.add('sb-collapsed');
       } catch (e) {}
-      if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
-      if (theme === 'dark') root.classList.add('dark');
     })();
   </script>
 
@@ -31,7 +27,7 @@
         darkMode: 'class',
         theme: {
           extend: {
-            fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+            fontFamily: { sans: ['G4S Gill', 'Lato', 'Segoe UI', 'sans-serif'] },
             colors: {
               brand: { navy: '#10253F', red: '#E4002B', black: '#000000' },
               gray: grays,
@@ -53,12 +49,28 @@
     })();
   </script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Lato: respaldo gratuito si el equipo no tiene Gill Sans instalada -->
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
+    /* =====================================================================
+       TIPOGRAFÍA: Gill Sans (Light para el texto general)
+       Usa la Gill Sans instalada en el equipo; si no existe, se usa Lato.
+       ===================================================================== */
+    @font-face { font-family: 'G4S Gill'; font-weight: 100 300;
+      src: local('Gill Sans Light'), local('GillSans-Light'), local('Gill Sans MT Light'), local('GillSansMT-Light'), local('Gill Sans'), local('GillSans'), local('Gill Sans MT'), local('GillSansMT'); }
+    @font-face { font-family: 'G4S Gill'; font-weight: 400 500;
+      src: local('Gill Sans'), local('GillSans'), local('Gill Sans MT'), local('GillSansMT'); }
+    @font-face { font-family: 'G4S Gill'; font-weight: 600;
+      src: local('Gill Sans SemiBold'), local('GillSans-SemiBold'), local('Gill Sans MT Bold'), local('GillSansMT-Bold'), local('Gill Sans Bold'), local('GillSans-Bold'); }
+    @font-face { font-family: 'G4S Gill'; font-weight: 700;
+      src: local('Gill Sans Bold'), local('GillSans-Bold'), local('Gill Sans MT Bold'), local('GillSansMT-Bold'); }
+    @font-face { font-family: 'G4S Gill'; font-weight: 800 900;
+      src: local('Gill Sans UltraBold'), local('GillSans-UltraBold'), local('Gill Sans Ultra Bold'), local('Gill Sans Bold'), local('GillSans-Bold'), local('Gill Sans MT Bold'), local('GillSansMT-Bold'); }
+
     /* =====================================================================
        MARCA G4S
        ===================================================================== */
@@ -86,7 +98,6 @@
       --side-border: #0B1C31;
       --ld-tick: rgba(16, 37, 63, .28);
       --ld-arc-2: #10253F;
-      --grid-dot: rgba(16, 37, 63, .12);
       --shadow: 16 37 63;
 
       /* Escala de grises con tinte azul marino (Tailwind gray/slate) */
@@ -103,7 +114,6 @@
       --side-border: #16283F;
       --ld-tick: rgba(255, 255, 255, .22);
       --ld-arc-2: #6B8FBF;
-      --grid-dot: rgba(255, 255, 255, .07);
       --shadow: 0 0 0;
 
       --g-50: 19 38 63;     --g-100: 26 47 75;    --g-200: 36 58 87;    --g-300: 68 96 127;   --g-400: 125 141 163;
@@ -111,7 +121,7 @@
     }
 
     html, body { background-color: var(--page-bg); }
-    body { font-family: 'Inter', sans-serif; color: rgb(var(--g-800)); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'G4S Gill', 'Lato', 'Segoe UI', sans-serif; font-weight: 300; color: rgb(var(--g-800)); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
     .hidden { display: none !important; }
 
     /* Transición suave al cambiar de tema (solo mientras dura el cambio) */
@@ -125,19 +135,8 @@
     #system-loader {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background:
-        radial-gradient(520px circle at 50% 40%, rgba(228, 0, 43, .09), transparent 60%),
-        radial-gradient(900px circle at 50% 70%, rgba(16, 37, 63, .10), transparent 70%),
-        var(--page-bg);
+      background: #FFFFFF;
       transition: opacity .6s ease;
-    }
-    #system-loader::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.6px);
-      background-size: 22px 22px;
-      -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 65%);
-              mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 65%);
-      animation: gridDrift 14s linear infinite;
     }
     #system-loader > * { position: relative; z-index: 1; }
     .loader-hidden { opacity: 0; pointer-events: none; }
@@ -187,7 +186,6 @@
     .ld-sub { margin-top: 8px; font-size: 11px; font-weight: 600; color: rgb(var(--g-400)); }
 
     @keyframes uiSpin { to { transform: rotate(360deg); } }
-    @keyframes gridDrift { to { background-position: 22px 22px; } }
     @keyframes ldBar { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
     @keyframes ldDot { 0%, 80%, 100% { opacity: .2; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
     @keyframes logoPulse {
@@ -370,28 +368,27 @@
 
     /* Banner principal */
     .page-hero {
-      position: relative; overflow: hidden; isolation: isolate; border-radius: 10px;
-      min-height: 150px; padding: 28px 30px; display: flex; align-items: flex-end;
+      position: relative; overflow: hidden; isolation: isolate; border-radius: 8px;
+      padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
       color: #fff; background-color: var(--brand-navy);
-      box-shadow: 0 18px 40px -22px rgb(var(--shadow) / .7);
+      box-shadow: 0 12px 28px -18px rgb(var(--shadow) / .7);
     }
     .page-hero::before {
       content: ''; position: absolute; inset: 0; z-index: -1;
       background:
-        linear-gradient(100deg, rgba(16, 37, 63, .97) 0%, rgba(16, 37, 63, .86) 42%, rgba(16, 37, 63, .35) 100%),
+        linear-gradient(90deg, rgba(16, 37, 63, .97) 0%, rgba(16, 37, 63, .88) 45%, rgba(16, 37, 63, .45) 100%),
         var(--brand-banner) center / cover no-repeat;
-      animation: heroZoom 20s ease-in-out infinite alternate;
     }
     .page-hero::after {
       content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
       background: linear-gradient(90deg, var(--brand-red) 0%, rgba(228, 0, 43, .6) 40%, transparent 100%);
     }
     .hero-kicker {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-      font-size: 10px; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; color: #FF5C7A;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+      font-size: 9px; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; color: #FF5C7A;
     }
-    .hero-kicker::before { content: ''; width: 18px; height: 2px; background: currentColor; }
-    .hero-sub { margin-top: 6px; font-size: 13px; color: rgba(255, 255, 255, .72); }
+    .hero-kicker::before { content: ''; width: 16px; height: 2px; background: currentColor; }
+    .hero-sub { font-size: 12px; color: rgba(255, 255, 255, .75); text-align: right; max-width: 280px; }
 
     /* Encabezados de tarjetas y modales con la marca */
     .brand-header {
@@ -417,6 +414,24 @@
     html.dark .stat-badge { color: #FF6B85; }
 
     thead th { letter-spacing: .06em; }
+
+    /* Tablas y listas con altura fija y scroll (la página no crece sin fin) */
+    .table-scroll { overflow: auto; max-height: calc(100vh - 150px); }
+    .table-scroll-sm { max-height: 340px; }
+    .table-scroll thead th {
+      position: sticky; top: 0; z-index: 1;
+      background-color: rgb(var(--g-50)); box-shadow: inset 0 -1px 0 rgb(var(--g-200));
+    }
+    .list-scroll { overflow-y: auto; max-height: calc(100vh - 150px); padding: 2px 6px 10px 2px; }
+    .tbl-title {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--g-500));
+    }
+    .tbl-title::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--brand-red); }
+    @media (max-width: 768px) {
+      .table-scroll, .list-scroll { max-height: calc(100vh - 210px); }
+      .table-scroll-sm { max-height: 340px; }
+    }
     tbody tr { transition: background-color .15s; }
 
     /* Modales */
@@ -489,7 +504,7 @@
     /* =====================================================================
        VENTANAS EMERGENTES (SweetAlert)
        ===================================================================== */
-    .swal2-popup { font-family: 'Inter', sans-serif !important; border-radius: 10px !important; }
+    .swal2-popup { font-family: 'G4S Gill', 'Lato', 'Segoe UI', sans-serif !important; border-radius: 10px !important; }
     html .swal2-styled.swal2-confirm { background-color: var(--brand-navy) !important; border-radius: 6px; font-weight: 700; letter-spacing: .03em; }
     html .swal2-styled.swal2-confirm[style*="193, 39, 45"] { background-color: var(--brand-red) !important; }
     html .swal2-styled.swal2-cancel { border-radius: 6px; font-weight: 700; }
@@ -549,14 +564,12 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
     @keyframes popIn { 0% { opacity: 0; transform: scale(.94); } 60% { opacity: 1; transform: scale(1.01); } 100% { transform: scale(1); } }
-    @keyframes heroZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
     @keyframes barIn { from { transform: scaleY(0); } to { transform: scaleY(1); } }
     @keyframes labelIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
     @keyframes ttIcon { from { opacity: 0; transform: rotate(-90deg) scale(.5); } to { opacity: 1; transform: none; } }
     @keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
     @media (prefers-reduced-motion: reduce) {
-      .page-hero::before, #system-loader::before { animation: none; }
       #main-wrapper > section:not(.hidden), #result-card:not(.hidden) { animation-duration: .01ms; }
     }
   </style>
@@ -628,14 +641,14 @@
   <div id="main-wrapper">
 
     <section id="sec-inicio" class="hidden">
-      <div class="page-hero mb-6">
+      <div class="page-hero mb-5">
         <div>
           <p class="hero-kicker">G4S · Gestión del Talento</p>
-          <h2 class="text-2xl md:text-3xl font-black uppercase tracking-tight">Resumen General</h2>
-          <p class="hero-sub">Seguimiento y distribución de las evaluaciones de desempeño</p>
+          <h2 class="text-lg md:text-xl font-black uppercase tracking-tight">Resumen General</h2>
         </div>
+        <p class="hero-sub hidden md:block">Seguimiento y distribución de las evaluaciones de desempeño</p>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col">
            <div class="flex justify-between items-center mb-4">
              <h3 class="font-bold text-gray-700">Distribución de Calificaciones (1-5)</h3>
@@ -669,34 +682,40 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mt-6">
-         <h3 class="font-bold text-gray-700 mb-4">Cantidad de Evaluaciones por Regional</h3>
-         <div class="flex gap-4 mb-4 flex-wrap">
-           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="dash-start" class="border p-2 rounded-lg text-sm outline-none w-full transition-colors"></div>
-           <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="dash-end" class="border p-2 rounded-lg text-sm outline-none w-full transition-colors"></div>
-          <div class="flex-grow max-w-[200px]">
-  <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
-  <select id="dash-regional" class="border p-2 rounded-lg text-sm w-full outline-none bg-white focus:border-red-500 transition-colors">
-    <option value="TODOS">Todos</option>
-  </select>
-</div>
-           <button onclick="cargarTablaDashboard(); cargarTablaDashboardEmpresa();" class="btn-navy btn-fx px-6 py-2 rounded-lg text-xs font-bold uppercase mt-auto h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+      <div class="bg-white rounded-2xl p-5 shadow-lg border border-gray-100 mb-6">
+         <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+           <h3 class="font-bold text-gray-700">Cantidad de Evaluaciones</h3>
+           <div class="flex gap-3 flex-wrap items-end">
+             <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="dash-start" class="border p-2 rounded-lg text-sm outline-none w-full transition-colors"></div>
+             <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="dash-end" class="border p-2 rounded-lg text-sm outline-none w-full transition-colors"></div>
+             <div class="w-[200px] max-w-full">
+               <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+               <select id="dash-regional" class="border p-2 rounded-lg text-sm w-full outline-none bg-white focus:border-red-500 transition-colors">
+                 <option value="TODOS">Todos</option>
+               </select>
+             </div>
+             <button onclick="cargarTablaDashboard(); cargarTablaDashboardEmpresa();" class="btn-navy btn-fx px-6 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+           </div>
          </div>
-         <div class="border rounded-xl overflow-hidden">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Regional</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
-              <tbody id="dash-regional-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros y consulte.</td></tbody>
-            </table>
-         </div>
-      </div>
-
-      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mt-6 mb-8">
-         <h3 class="font-bold text-gray-700 mb-4">Cantidad de Evaluaciones por Empresa</h3>
-         <div class="border rounded-xl overflow-hidden">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Empresa</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
-              <tbody id="dash-empresa-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros arriba y consulte.</td></tbody>
-            </table>
+         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+           <div>
+             <p class="tbl-title">Por Regional</p>
+             <div class="table-scroll table-scroll-sm border rounded-xl">
+               <table class="w-full text-left text-sm">
+                 <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Regional</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
+                 <tbody id="dash-regional-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros y consulte.</td></tbody>
+               </table>
+             </div>
+           </div>
+           <div>
+             <p class="tbl-title">Por Empresa</p>
+             <div class="table-scroll table-scroll-sm border rounded-xl">
+               <table class="w-full text-left text-sm">
+                 <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase"><tr><th class="p-4">Empresa</th><th class="p-4 text-right">Cantidad Total</th></tr></thead>
+                 <tbody id="dash-empresa-body" class="divide-y"><td colspan="2" class="p-4 text-center text-gray-400 italic text-xs">Seleccione filtros arriba y consulte.</td></tbody>
+               </table>
+             </div>
+           </div>
          </div>
       </div>
     </section>
@@ -777,7 +796,7 @@
           <span class="material-icons text-sm">add</span> Nuevo
         </button>
       </div>
-      <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
+      <div class="table-scroll bg-white rounded-xl border shadow-sm">
         <table class="w-full text-left text-sm">
           <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
             <tr><th class="p-4">Nombre</th><th class="p-4">Correo</th><th class="p-4">Rol</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr>
@@ -790,7 +809,7 @@
     <section id="sec-formulario" class="hidden">
       <h2 class="page-title text-2xl font-black mb-6 uppercase">Editor de Preguntas</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-4" id="questions-list">
+        <div class="lg:col-span-2 space-y-4 list-scroll" id="questions-list">
           </div>
         <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
            <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
@@ -808,7 +827,7 @@
     <section id="sec-form-update" class="hidden">
       <h2 class="page-title text-2xl font-black mb-6 uppercase">Editor: Formulario Actualización</h2>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-4" id="update-questions-list">
+        <div class="lg:col-span-2 space-y-4 list-scroll" id="update-questions-list">
           </div>
         <div class="bg-white p-6 rounded-xl border h-fit sticky top-4 shadow-sm">
            <h3 class="font-bold mb-4 text-gray-800">Acciones</h3>
@@ -1373,14 +1392,13 @@
         if (!window.Chart) return;
         var oscuro = root.classList.contains('dark');
         Chart.defaults.color = oscuro ? '#B3BFCF' : '#4B5970';
-        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.family = "'G4S Gill', 'Lato', 'Segoe UI', sans-serif";
         if (typeof myChart !== 'undefined' && myChart) myChart.update();
       }
 
       window.uiToggleTheme = function () {
         root.classList.add('theme-anim');
-        var oscuro = root.classList.toggle('dark');
-        guardar('g4s-theme', oscuro ? 'dark' : 'light');
+        root.classList.toggle('dark');
         sincronizarGrafica();
         setTimeout(function () { root.classList.remove('theme-anim'); }, 450);
       };
