@@ -1,0 +1,23 @@
+Url nueva de favicon, iconos y marca: https://www.appsheet.com/template/gettablefileurl?appName=APPFOTOS-6147552&tableName=FOTO&fileName=FOTO_Images%2Ff6c7066e.FOTOGRAFIA.013116.jpg
+
+
+G4S: color secundario
+#E4002B
+PANTONE®: 185C
+CMYK: 0-93-79-0
+RGB: 228-0-43
+
+G4S: color Principal:
+#10253F
+PANTONE®: 289 C
+CMYK:96-81-47-51
+RGB: 16-37-63
+
+G4S: color complemetario:
+#000000
+CMYK: 0-0-0-100
+RGB: 0-0-0
+
+
+Esta es la Url de un Banner: https://www.appsheet.com/template/gettablefileurl?appName=APPFOTOS-6147552&tableName=FOTO&fileName=FOTO_Images%2F0d91903c.FOTOGRAFIA.193906.jpg
+
