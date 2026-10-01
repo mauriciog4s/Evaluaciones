@@ -21,3 +21,9 @@ RGB: 0-0-0
 
 Esta es la Url de un Banner: https://www.appsheet.com/template/gettablefileurl?appName=APPFOTOS-6147552&tableName=FOTO&fileName=FOTO_Images%2F0d91903c.FOTOGRAFIA.193906.jpg
 
+Ajustes de diseño:
+
+1. inicio del portal colocar un sppiner de carga mas digital y moderno con la imagen del logo de G4s
+2. Menu debe ser retractil, debe tener el logo de G4s con la Url nueva
+3. Aplicar los colores de la marca
+4. estilo moderno y bien presentado para una compañia multinacional, ligero y novedoso, bordes de targetas no tan redondeados, no mover de lugar las cosas el solo rebranding
