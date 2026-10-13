@@ -844,6 +844,7 @@
               </select>
             </div>
             <button onclick="consultarTablaEvaluacionesRH()" class="btn-navy btn-fx px-5 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+            <button onclick="limpiarFiltrosConsultasEval()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 transition-colors"><span class="material-icons text-sm">filter_alt_off</span> Limpiar</button>
             <button onclick="exportarTablaEvaluacionesRH()" class="btn-fx bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">download</span> Excel</button>
           </div>
         </div>
@@ -883,6 +884,7 @@
               <input type="text" id="cons-habeas-cedula" placeholder="Opcional" class="border p-2 rounded-lg text-sm w-full outline-none">
             </div>
             <button onclick="consultarTablaHabeasRH()" class="btn-red btn-fx px-5 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+            <button onclick="limpiarFiltrosConsultasHabeas()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 transition-colors"><span class="material-icons text-sm">filter_alt_off</span> Limpiar</button>
             <button onclick="exportarTablaHabeasRH()" class="btn-fx bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">download</span> Excel</button>
           </div>
         </div>
@@ -905,46 +907,57 @@
         <h2 class="page-title text-2xl font-black uppercase m-0">Mis Evaluaciones</h2>
       </div>
 
-      <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
-
-        <div class="min-w-[180px]">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
-          <select id="report-regional" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
-            <option value="TODOS">Todas las Regionales</option>
-          </select>
+      <!-- REPORTE DE EVALUACIONES -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-icons text-red-600 text-2xl">assignment</span>
+          <h3 class="page-title text-xl font-black uppercase m-0">Reporte de Evaluaciones</h3>
         </div>
 
-        <div class="min-w-[180px]">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Empresa</label>
-          <select id="report-empresa" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
-            <option value="TODOS">Todas las Empresas</option>
-          </select>
+        <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+
+          <div class="min-w-[180px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+            <select id="report-regional" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
+              <option value="TODOS">Todas las Regionales</option>
+            </select>
+          </div>
+
+          <div class="min-w-[180px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Empresa</label>
+            <select id="report-empresa" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
+              <option value="TODOS">Todas las Empresas</option>
+            </select>
+          </div>
+
+          <button onclick="prepararDescarga()" class="btn-navy btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
+             <span class="material-icons text-sm">settings</span> Preparar Descarga
+          </button>
+          <button onclick="limpiarFiltrosMisEvaluaciones()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-sm flex items-center gap-2 transition-colors">
+             <span class="material-icons text-sm">filter_alt_off</span> Limpiar
+          </button>
         </div>
 
-        <button onclick="prepararDescarga()" class="btn-navy btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
-           <span class="material-icons text-sm">settings</span> Preparar Descarga
-        </button>
-      </div>
+        <div id="download-ready-container" class="hidden mb-8">
+           <div class="bg-white p-10 rounded-3xl border-2 border-dashed border-green-200 flex flex-col items-center text-center shadow-sm">
+              <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
+                 <span class="material-icons text-4xl">check_circle</span>
+              </div>
+              <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">¡Informe Preparado!</h3>
+              <p class="text-gray-500 text-sm mb-6 max-w-xs">Los datos han sido procesados y están listos para ser descargados en formato Excel.</p>
 
-      <div id="download-ready-container" class="hidden mb-8">
-         <div class="bg-white p-10 rounded-3xl border-2 border-dashed border-green-200 flex flex-col items-center text-center shadow-sm">
-            <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
-               <span class="material-icons text-4xl">check_circle</span>
-            </div>
-            <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">¡Informe Preparado!</h3>
-            <p class="text-gray-500 text-sm mb-6 max-w-xs">Los datos han sido procesados y están listos para ser descargados en formato Excel.</p>
+              <button onclick="descargarExcel()" class="btn-fx group bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-xl hover:shadow-green-200/50 transition-all flex items-center gap-3">
+                <span class="material-icons text-xl group-hover:scale-110 transition-transform">download</span>
+                Descargar Informe Final
+              </button>
 
-            <button onclick="descargarExcel()" class="btn-fx group bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-xl hover:shadow-green-200/50 transition-all flex items-center gap-3">
-              <span class="material-icons text-xl group-hover:scale-110 transition-transform">download</span>
-              Descargar Informe Final
-            </button>
-
-            <div id="download-count-badge" class="mt-4 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-               0 REGISTROS ENCONTRADOS
-            </div>
-         </div>
+              <div id="download-count-badge" class="mt-4 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                 0 REGISTROS ENCONTRADOS
+              </div>
+           </div>
+        </div>
       </div>
 
       <!-- TAREA 1: SECCIÓN REPORTE HABEAS DATA -->
@@ -965,6 +978,9 @@
 
           <button onclick="prepararDescargaHabeasData()" class="btn-red btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
              <span class="material-icons text-sm">file_download</span> Descargar Reporte
+          </button>
+          <button onclick="limpiarFiltrosHabeasData()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-sm flex items-center gap-2 transition-colors">
+             <span class="material-icons text-sm">filter_alt_off</span> Limpiar
           </button>
         </div>
 
@@ -1574,12 +1590,71 @@
       }
     }
 
+    function limpiarFiltrosMisEvaluaciones() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('report-start')) document.getElementById('report-start').value = firstDay;
+      if (document.getElementById('report-end')) document.getElementById('report-end').value = lastDay;
+      if (document.getElementById('report-regional')) document.getElementById('report-regional').value = 'TODOS';
+      if (document.getElementById('report-empresa')) document.getElementById('report-empresa').value = 'TODOS';
+      if (document.getElementById('download-ready-container')) document.getElementById('download-ready-container').classList.add('hidden');
+      reportData = [];
+    }
+
+    function limpiarFiltrosHabeasData() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('habeas-start')) document.getElementById('habeas-start').value = firstDay;
+      if (document.getElementById('habeas-end')) document.getElementById('habeas-end').value = lastDay;
+      if (document.getElementById('habeas-cedula')) document.getElementById('habeas-cedula').value = '';
+      if (document.getElementById('habeas-ready-container')) document.getElementById('habeas-ready-container').classList.add('hidden');
+      habeasReportData = null;
+    }
+
     /* =====================================================================
        FUNCIONES MÓDULO DE CONSULTAS (RECURSOS HUMANOS) - TAREA 2
        ===================================================================== */
     function initConsultasView() {
+      cargarMetricasYGraficosGlobalesConsultas();
       consultarTablaEvaluacionesRH();
       consultarTablaHabeasRH();
+    }
+
+    // Carga global para métricas e indicadores de los gráficos (no depende de filtros de tabla)
+    function cargarMetricasYGraficosGlobalesConsultas() {
+      if (typeof google === 'undefined') return;
+
+      google.script.run.withSuccessHandler(allRows => {
+        const rows = allRows || [];
+        let sumaTotal = 0;
+        let countValidos = 0;
+
+        rows.forEach(r => {
+          const valNum = parseFloat(r.resultado);
+          if (!isNaN(valNum)) {
+            sumaTotal += valNum;
+            countValidos++;
+          }
+        });
+
+        if (document.getElementById('consultas-metric-total')) {
+          document.getElementById('consultas-metric-total').innerText = rows.length;
+        }
+        if (document.getElementById('consultas-metric-promedio')) {
+          const prom = countValidos > 0 ? (sumaTotal / countValidos).toFixed(1) : '0.0';
+          document.getElementById('consultas-metric-promedio').innerText = prom;
+        }
+
+        renderConsultasCharts(rows);
+      }).getReportData('', '', 'TODOS', 'TODOS');
+
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.rows && document.getElementById('consultas-metric-habeas')) {
+          document.getElementById('consultas-metric-habeas').innerText = res.rows.length;
+        }
+      }).getHabeasDataReport('', '', '');
     }
 
     function consultarTablaEvaluacionesRH() {
@@ -1602,44 +1677,47 @@
         consultasEvalData = rows || [];
         if (!rows || rows.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-xs text-gray-400">Sin datos para los filtros seleccionados.</td></tr>`;
-          document.getElementById('consultas-metric-total').innerText = '0';
-          document.getElementById('consultas-metric-promedio').innerText = '0.0';
-          renderConsultasCharts([]);
           return;
         }
 
-        // Métricas
-        let sumaTotal = 0;
-        let countValidos = 0;
-        let html = rows.map(r => {
-          const valNum = parseFloat(r.resultado);
-          if (!isNaN(valNum)) {
-            sumaTotal += valNum;
-            countValidos++;
-          }
-          return `
-            <tr class="hover:bg-gray-50 border-b transition">
-              <td class="p-3 text-xs text-gray-600">${r.fecha}</td>
-              <td class="p-3 font-bold text-gray-800 text-xs">${r.nombre}</td>
-              <td class="p-3 text-xs text-gray-600">${r.cedula}</td>
-              <td class="p-3 text-xs text-gray-600">${r.empresa}</td>
-              <td class="p-3 text-xs text-gray-600">${r.regional}</td>
-              <td class="p-3 text-xs text-gray-600">${r.evaluador}</td>
-              <td class="p-3 text-center font-black text-xs text-gray-800">${r.resultado}</td>
-              <td class="p-3 text-center">
-                <button onclick="verPdfExistente('${r.embedLink}')" class="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded text-[10px] font-bold uppercase transition">Ver PDF</button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        let html = rows.map(r => `
+          <tr class="hover:bg-gray-50 border-b transition">
+            <td class="p-3 text-xs text-gray-600">${r.fecha}</td>
+            <td class="p-3 font-bold text-gray-800 text-xs">${r.nombre}</td>
+            <td class="p-3 text-xs text-gray-600">${r.cedula}</td>
+            <td class="p-3 text-xs text-gray-600">${r.empresa}</td>
+            <td class="p-3 text-xs text-gray-600">${r.regional}</td>
+            <td class="p-3 text-xs text-gray-600">${r.evaluador}</td>
+            <td class="p-3 text-center font-black text-xs text-gray-800">${r.resultado}</td>
+            <td class="p-3 text-center">
+              <button onclick="verPdfExistente('${r.embedLink}')" class="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded text-[10px] font-bold uppercase transition">Ver PDF</button>
+            </td>
+          </tr>
+        `).join('');
 
         tbody.innerHTML = html;
-        document.getElementById('consultas-metric-total').innerText = rows.length;
-        const prom = countValidos > 0 ? (sumaTotal / countValidos).toFixed(1) : '0.0';
-        document.getElementById('consultas-metric-promedio').innerText = prom;
-
-        renderConsultasCharts(rows);
       }).getReportData(ini, fin, reg, emp);
+    }
+
+    function limpiarFiltrosConsultasEval() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('cons-eval-start')) document.getElementById('cons-eval-start').value = firstDay;
+      if (document.getElementById('cons-eval-end')) document.getElementById('cons-eval-end').value = lastDay;
+      if (document.getElementById('cons-eval-regional')) document.getElementById('cons-eval-regional').value = 'TODOS';
+      if (document.getElementById('cons-eval-empresa')) document.getElementById('cons-eval-empresa').value = 'TODOS';
+      consultarTablaEvaluacionesRH();
+    }
+
+    function limpiarFiltrosConsultasHabeas() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('cons-habeas-start')) document.getElementById('cons-habeas-start').value = firstDay;
+      if (document.getElementById('cons-habeas-end')) document.getElementById('cons-habeas-end').value = lastDay;
+      if (document.getElementById('cons-habeas-cedula')) document.getElementById('cons-habeas-cedula').value = '';
+      consultarTablaHabeasRH();
     }
 
     function exportarTablaEvaluacionesRH() {
