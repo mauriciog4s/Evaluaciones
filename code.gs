@@ -7,6 +7,7 @@ const CONFIG = {
     USUARIOS: '1pXCF8pwFNUSdP_-6L9ib9fcBltZqHoUW7tGyVI4zbx0',
     EMPLEADOS: '1zFayNigYrkODNRhKq4IoErLELB98xyj_8ZvGADEp3s4',
     EVALUACIONES: '1WuIyPUYGzKTlmSQ8oGUTdOu4Tm-JrpUNDYksJzHjweA',
+    HABEAS_DATA: '1AqK-Mg4yOCCSEUZKllONg4egHsed9cVJd4CBAvNd9W4',
     PLANTILLA_DOC: '1gvD5arbSG66iUMimEnvvYNI3tjzm7Al18VUJw_fA5Rk',
     CARPETA_PDF: '16U-cJ4f5tjk3WkgxOVx9FjkNTa6se-lT', 
     
@@ -367,11 +368,13 @@ function getLazyData() {
     const userInit = getInitData();
     if (userInit.error) return { error: true, message: 'Acceso denegado' };
 
+    const userRole = userInit.role;
     const isAdminUI = userInit.isAdmin;
-    const hasDashboard = ['Administrador', 'Evaluador'].includes(userInit.role);
+    const hasDashboard = ['Administrador', 'Evaluador', 'Recursos humanos'].includes(userRole);
 
     let evaluadoresUnicos = [];
     let regionalesUnicas = [];
+    let empresasUnicas = [];
     let stats = { total: 0, c5:0, c4:0, c3:0, c2:0, c1:0 };
 
     if (isAdminUI || hasDashboard) {
@@ -381,11 +384,12 @@ function getLazyData() {
 
       const idxEv = evHeaders.indexOf('Evaluador');
       const idxReg = evHeaders.indexOf('Regional');
+      const idxEmp = evHeaders.indexOf('Empresa');
       const idxGlobal = evHeaders.indexOf('Evglobal');
 
       const rows = evData.slice(1);
 
-      if (idxEv > -1 && isAdminUI) {
+      if (idxEv > -1 && (isAdminUI || userRole === 'Recursos humanos')) {
         const listaEv = rows.map(r => r[idxEv]).filter(e => e && e.toString().trim() !== '');
         evaluadoresUnicos = [...new Set(listaEv)].sort();
       }
@@ -393,6 +397,11 @@ function getLazyData() {
       if (idxReg > -1 && hasDashboard) {
         const listaReg = rows.map(r => r[idxReg]).filter(e => e && e.toString().trim() !== '');
         regionalesUnicas = [...new Set(listaReg)].sort();
+      }
+
+      if (idxEmp > -1 && hasDashboard) {
+        const listaEmp = rows.map(r => r[idxEmp]).filter(e => e && e.toString().trim() !== '');
+        empresasUnicas = [...new Set(listaEmp)].sort();
       }
 
       if (idxGlobal > -1 && hasDashboard) {
@@ -412,6 +421,7 @@ function getLazyData() {
       success: true,
       evaluadores: evaluadoresUnicos,
       regionales: regionalesUnicas,
+      empresas: empresasUnicas,
       dashboard: stats
     };
   } catch (e) {
@@ -499,7 +509,7 @@ function getStatsEmpresa(inicio, fin, regionalFiltro) {
   } catch (e) { return []; }
 }
 
-function getReportData(inicio, fin, regionalFiltro) {
+function getReportData(inicio, fin, regionalFiltro, empresaFiltro) {
   try {
     const userInit = getInitData();
     if (userInit.error) return [];
@@ -521,19 +531,27 @@ function getReportData(inicio, fin, regionalFiltro) {
     const d1 = new Date(inicio + "T00:00:00"); 
     const d2 = new Date(fin + "T23:59:59");
 
+    const isFullAccessRole = ['Administrador', 'UsuarioAdministrador', 'Recursos humanos'].includes(userRole);
+
     const filtrados = data.slice(1).filter(r => {
       const fechaRow = new Date(r[iFecha]);
       const userRow = (r[iUser] || "").toString().toLowerCase();
       const regRow = iRegional > -1 ? (r[iRegional] || "").toString().trim() : "";
+      const empRow = iEmpresa > -1 ? (r[iEmpresa] || "").toString().trim() : "";
       const enFecha = fechaRow >= d1 && fechaRow <= d2;
       
-      if (userRole === 'Administrador' || userRole === 'UsuarioAdministrador') {
+      if (!enFecha) return false;
+
+      if (isFullAccessRole) {
         if (regionalFiltro && regionalFiltro !== 'TODOS' && regRow !== regionalFiltro) {
           return false;
         }
-        return enFecha;
+        if (empresaFiltro && empresaFiltro !== 'TODOS' && empRow !== empresaFiltro) {
+          return false;
+        }
+        return true;
       }
-      return enFecha && userRow === userEmail.toLowerCase();
+      return userRow === userEmail.toLowerCase();
     });
 
     return filtrados.map(r => {
@@ -543,7 +561,7 @@ function getReportData(inicio, fin, regionalFiltro) {
         fecha: formatFecha(r[iFecha]),
         evaluador: iEvaluador > -1 ? r[iEvaluador] : 'Desconocido',
         regional: iRegional > -1 ? r[iRegional] : '-',
-        empresa: iEmpresa > -1 ? r[iEmpresa] : '-', // 🔴 MEJORA: Retornar Empresa
+        empresa: iEmpresa > -1 ? r[iEmpresa] : '-',
         nombre: r[iNombre] || 'Desconocido',
         cedula: r[iCedula] || '-',
         resultado: r[iRes] || '-',
@@ -552,6 +570,63 @@ function getReportData(inicio, fin, regionalFiltro) {
       };
     });
   } catch(e) { return []; }
+}
+
+function getHabeasDataReport(inicio, fin, cedulaFiltro) {
+  try {
+    const userInit = getInitData();
+    if (userInit.error) return [];
+
+    const ss = SpreadsheetApp.openById(CONFIG.IDS.HABEAS_DATA);
+    let sheet = ss.getSheetByName('Form Responses 2');
+    if (!sheet) {
+      sheet = ss.getSheets()[0];
+    }
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return { headers: [], rows: [] };
+
+    const headers = data[0].map(h => h.toString().trim());
+
+    // Buscar columna de fecha (Timestamp / Marca temporal) y Cédula
+    let idxFecha = headers.findIndex(h => /marca temporal|timestamp|fecha/i.test(h));
+    if (idxFecha === -1) idxFecha = 0;
+
+    let idxCedula = headers.findIndex(h => /cédula|cedula|identificaci/i.test(h));
+
+    let d1 = inicio ? new Date(inicio + "T00:00:00") : null;
+    let d2 = fin ? new Date(fin + "T23:59:59") : null;
+    let cedStr = cedulaFiltro ? cedulaFiltro.toString().trim().toLowerCase() : "";
+
+    const filtered = data.slice(1).filter(r => {
+      if (d1 && d2) {
+        const rowDate = new Date(r[idxFecha]);
+        if (isNaN(rowDate.getTime()) || rowDate < d1 || rowDate > d2) {
+          return false;
+        }
+      }
+      if (cedStr && idxCedula > -1) {
+        const rowCed = (r[idxCedula] || "").toString().trim().toLowerCase();
+        if (!rowCed.includes(cedStr)) return false;
+      }
+      return true;
+    });
+
+    const formattedRows = filtered.map(r => {
+      return r.map((val, idx) => {
+        if (idx === idxFecha && val instanceof Date) {
+          return Utilities.formatDate(val, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        }
+        return val != null ? val.toString() : "";
+      });
+    });
+
+    return {
+      headers: headers,
+      rows: formattedRows
+    };
+  } catch(e) {
+    return { headers: [], rows: [], error: e.message };
+  }
 }
 
 function getUsersData() {
