@@ -1207,15 +1207,18 @@
     let updateFormLoads = 0; 
 
     function aplicarPermisos(role) {
-      const userRole = role ? role.trim() : 'Usuario';
+      const userRole = role ? role.toString().trim() : 'Usuario';
+      const roleClean = userRole.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
       const permissions = {
-        'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-consultas', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
-        'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
-        'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
-        'Recursos humanos': ['m-consultas'],
-        'Usuario': ['m-mis-evaluaciones']
+        'administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-consultas', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
+        'usuarioadministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'recursos humanos': ['m-consultas'],
+        'usuario': ['m-mis-evaluaciones']
       };
-      const myPermissions = permissions[userRole] || ['m-mis-evaluaciones']; 
+
+      const myPermissions = permissions[roleClean] || ['m-mis-evaluaciones'];
       const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-consultas', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
       allItems.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
       myPermissions.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
@@ -1580,12 +1583,17 @@
     }
 
     function consultarTablaEvaluacionesRH() {
-      const ini = document.getElementById('cons-eval-start').value;
-      const fin = document.getElementById('cons-eval-end').value;
-      const reg = document.getElementById('cons-eval-regional').value;
-      const emp = document.getElementById('cons-eval-empresa').value;
+      const iniEl = document.getElementById('cons-eval-start');
+      const finEl = document.getElementById('cons-eval-end');
+      const regEl = document.getElementById('cons-eval-regional');
+      const empEl = document.getElementById('cons-eval-empresa');
 
-      if (!ini || !fin || typeof google === 'undefined') return;
+      const ini = iniEl ? iniEl.value : '';
+      const fin = finEl ? finEl.value : '';
+      const reg = regEl ? regEl.value : 'TODOS';
+      const emp = empEl ? empEl.value : 'TODOS';
+
+      if (typeof google === 'undefined') return;
 
       const tbody = document.getElementById('cons-eval-tbody');
       tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-xs text-gray-500 animate-pulse">Cargando evaluaciones...</td></tr>`;

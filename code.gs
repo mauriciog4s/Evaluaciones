@@ -77,13 +77,13 @@ function getInitData() {
 
     const usuario = data.slice(1).find(r => 
       r[idxCorreo] && r[idxCorreo].toString().trim().toLowerCase() === userEmail.toLowerCase() && 
-      r[idxEstado] === 'Activo'
+      r[idxEstado] && normalizeText(r[idxEstado]) === 'activo'
     );
     if (!usuario) return { error: true, message: 'ACCESO DENEGADO: Su usuario no tiene permisos activos.' };
-    const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol] : 'Usuario';
+    const userRole = (idxRol > -1 && usuario[idxRol]) ? usuario[idxRol].toString().trim() : 'Usuario';
     const userName = (idxNombre > -1 && usuario[idxNombre]) ? usuario[idxNombre] : '';
-    const isAdminUI = ['Administrador', 'UsuarioAdministrador'].includes(userRole);
-    const hasDashboard = ['Administrador', 'Evaluador'].includes(userRole);
+    const roleNorm = normalizeText(userRole);
+    const isAdminUI = ['administrador', 'usuarioadministrador'].includes(roleNorm);
 
     return { 
       success: true, 
@@ -96,6 +96,44 @@ function getInitData() {
       templateUrl: `https://docs.google.com/document/d/${CONFIG.IDS.PLANTILLA_DOC}/edit`
     };
   } catch (err) { return { error: true, message: err.message }; }
+}
+
+function normalizeText(str) {
+  if (!str) return '';
+  return str.toString().trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseDateSafe(val) {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val;
+  }
+  const str = val.toString().trim();
+  if (!str) return null;
+
+  let d = new Date(str);
+  if (!isNaN(d.getTime())) return d;
+
+  const parts = str.split(/[\sT]+/);
+  const dateParts = parts[0].split(/[\/\-]/);
+  if (dateParts.length === 3) {
+    let day = parseInt(dateParts[0], 10);
+    let month = parseInt(dateParts[1], 10) - 1;
+    let year = parseInt(dateParts[2], 10);
+    if (year < 100) year += 2000;
+
+    if (dateParts[0].length === 4) {
+      year = parseInt(dateParts[0], 10);
+      month = parseInt(dateParts[1], 10) - 1;
+      day = parseInt(dateParts[2], 10);
+    }
+
+    d = new Date(year, month, day);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  return null;
 }
 
 function buscarEmpleado(cedula) {
@@ -369,8 +407,9 @@ function getLazyData() {
     if (userInit.error) return { error: true, message: 'Acceso denegado' };
 
     const userRole = userInit.role;
+    const roleNorm = normalizeText(userRole);
     const isAdminUI = userInit.isAdmin;
-    const hasDashboard = ['Administrador', 'Evaluador', 'Recursos humanos'].includes(userRole);
+    const hasDashboard = ['administrador', 'evaluador', 'recursos humanos'].includes(roleNorm);
 
     let evaluadoresUnicos = [];
     let regionalesUnicas = [];
@@ -389,7 +428,7 @@ function getLazyData() {
 
       const rows = evData.slice(1);
 
-      if (idxEv > -1 && (isAdminUI || userRole === 'Recursos humanos')) {
+      if (idxEv > -1 && (isAdminUI || roleNorm === 'recursos humanos')) {
         const listaEv = rows.map(r => r[idxEv]).filter(e => e && e.toString().trim() !== '');
         evaluadoresUnicos = [...new Set(listaEv)].sort();
       }
@@ -528,18 +567,19 @@ function getReportData(inicio, fin, regionalFiltro, empresaFiltro) {
     const iRegional = headers.indexOf('Regional');
     const iEmpresa = headers.indexOf('Empresa');
 
-    const d1 = new Date(inicio + "T00:00:00"); 
-    const d2 = new Date(fin + "T23:59:59");
+    const d1 = inicio ? parseDateSafe(inicio + "T00:00:00") || parseDateSafe(inicio) : null;
+    const d2 = fin ? parseDateSafe(fin + "T23:59:59") || parseDateSafe(fin) : null;
 
-    const isFullAccessRole = ['Administrador', 'UsuarioAdministrador', 'Recursos humanos'].includes(userRole);
+    const roleNorm = normalizeText(userRole);
+    const isFullAccessRole = ['administrador', 'usuarioadministrador', 'recursos humanos'].includes(roleNorm);
 
     const filtrados = data.slice(1).filter(r => {
-      const fechaRow = new Date(r[iFecha]);
+      const fechaRow = parseDateSafe(r[iFecha]);
       const userRow = (r[iUser] || "").toString().toLowerCase();
       const regRow = iRegional > -1 ? (r[iRegional] || "").toString().trim() : "";
       const empRow = iEmpresa > -1 ? (r[iEmpresa] || "").toString().trim() : "";
-      const enFecha = fechaRow >= d1 && fechaRow <= d2;
       
+      const enFecha = (!d1 || !d2 || (fechaRow && fechaRow >= d1 && fechaRow <= d2));
       if (!enFecha) return false;
 
       if (isFullAccessRole) {
@@ -588,19 +628,19 @@ function getHabeasDataReport(inicio, fin, cedulaFiltro) {
     const headers = data[0].map(h => h.toString().trim());
 
     // Buscar columna de fecha (Timestamp / Marca temporal) y Cédula
-    let idxFecha = headers.findIndex(h => /marca temporal|timestamp|fecha/i.test(h));
+    let idxFecha = headers.findIndex(h => /marca temporal|timestamp|fecha/i.test(normalizeText(h)));
     if (idxFecha === -1) idxFecha = 0;
 
-    let idxCedula = headers.findIndex(h => /cédula|cedula|identificaci/i.test(h));
+    let idxCedula = headers.findIndex(h => /cedula|identificaci|documento/i.test(normalizeText(h)));
 
-    let d1 = inicio ? new Date(inicio + "T00:00:00") : null;
-    let d2 = fin ? new Date(fin + "T23:59:59") : null;
+    let d1 = inicio ? parseDateSafe(inicio + "T00:00:00") || parseDateSafe(inicio) : null;
+    let d2 = fin ? parseDateSafe(fin + "T23:59:59") || parseDateSafe(fin) : null;
     let cedStr = cedulaFiltro ? cedulaFiltro.toString().trim().toLowerCase() : "";
 
     const filtered = data.slice(1).filter(r => {
       if (d1 && d2) {
-        const rowDate = new Date(r[idxFecha]);
-        if (isNaN(rowDate.getTime()) || rowDate < d1 || rowDate > d2) {
+        const rowDate = parseDateSafe(r[idxFecha]);
+        if (rowDate && (rowDate < d1 || rowDate > d2)) {
           return false;
         }
       }
@@ -613,8 +653,9 @@ function getHabeasDataReport(inicio, fin, cedulaFiltro) {
 
     const formattedRows = filtered.map(r => {
       return r.map((val, idx) => {
-        if (idx === idxFecha && val instanceof Date) {
-          return Utilities.formatDate(val, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+        if (idx === idxFecha) {
+          const dateObj = parseDateSafe(val);
+          if (dateObj) return Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
         }
         return val != null ? val.toString() : "";
       });
