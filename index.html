@@ -611,6 +611,7 @@
       <div onclick="nav('inicio')" class="nav-item hidden" id="m-inicio" data-label="Inicio"><span class="material-icons mr-3">dashboard</span><span class="sb-label">Inicio</span></div>
       <div onclick="nav('evaluar')" class="nav-item hidden" id="m-evaluar" data-label="Evaluar Talento"><span class="material-icons mr-3">assignment_ind</span><span class="sb-label">Evaluar Talento</span></div>
       <div onclick="nav('mis-evaluaciones')" class="nav-item hidden" id="m-mis-evaluaciones" data-label="Mis Evaluaciones"><span class="material-icons mr-3">history</span><span class="sb-label">Mis Evaluaciones</span></div>
+      <div onclick="nav('consultas')" class="nav-item hidden" id="m-consultas" data-label="Consultas"><span class="material-icons mr-3">analytics</span><span class="sb-label">Consultas</span></div>
 
       <div id="admin-menu" class="hidden sb-admin">
         <p class="sb-section"><span class="sb-label">Administración</span></p>
@@ -748,53 +749,324 @@
       </div>
     </section>
 
+    <!-- TAREA 2: NUEVA VISTA CONSULTAS (RECURSOS HUMANOS) -->
+    <section id="sec-consultas" class="hidden">
+      <div class="page-hero mb-6">
+        <div>
+          <p class="hero-kicker">G4S · Recursos Humanos</p>
+          <h2 class="text-lg md:text-xl font-black uppercase tracking-tight">Módulo de Consultas</h2>
+        </div>
+        <p class="hero-sub hidden md:block">Métricas claves, gráficos interactivos y tablas de consulta general</p>
+      </div>
+
+      <!-- Filtros Propios para Métricas y Gráficos -->
+      <div class="bg-white p-5 rounded-2xl border shadow-lg border-gray-100 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-3">
+          <h3 class="font-bold text-gray-800 text-xs uppercase tracking-wider flex items-center gap-2">
+            <span class="material-icons text-red-600 text-sm">tune</span>
+            Filtros para Indicadores y Gráficos
+          </h3>
+          <!-- Botones Rápidos de Período -->
+          <div class="flex gap-1.5 flex-wrap">
+            <button type="button" onclick="setMetricasQuickPeriod('semana')" class="quick-period-btn px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors">Semana</button>
+            <button type="button" onclick="setMetricasQuickPeriod('mes')" class="quick-period-btn px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors">Mes</button>
+            <button type="button" onclick="setMetricasQuickPeriod('semestre')" class="quick-period-btn px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors">Semestre</button>
+            <button type="button" onclick="setMetricasQuickPeriod('anio')" class="quick-period-btn px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors">Año</button>
+            <button type="button" onclick="setMetricasQuickPeriod('todo')" class="quick-period-btn px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-colors">Todo</button>
+          </div>
+        </div>
+
+        <div class="flex gap-3 flex-wrap items-end">
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label>
+            <input type="date" id="metricas-start" class="border p-2 rounded-lg text-xs outline-none bg-white">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label>
+            <input type="date" id="metricas-end" class="border p-2 rounded-lg text-xs outline-none bg-white">
+          </div>
+
+          <div class="min-w-[180px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Calificación</label>
+            <select id="metricas-calificacion" class="border p-2 rounded-lg text-xs w-full outline-none bg-white">
+              <option value="TODOS">Todas las Calificaciones</option>
+              <option value="5">5 - Excelente</option>
+              <option value="4">4 - Muy Bueno</option>
+              <option value="3">3 - Bueno</option>
+              <option value="2">2 - Regular</option>
+              <option value="1">1 - Deficiente</option>
+            </select>
+          </div>
+
+          <button onclick="filtrarMetricasYGraficosConsultas()" class="btn-navy btn-fx px-5 py-2 rounded-lg text-xs font-bold uppercase h-9 flex items-center gap-1.5"><span class="material-icons text-sm">filter_alt</span> Aplicar Filtro</button>
+          <button onclick="limpiarFiltrosMetricasConsultas()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase h-9 flex items-center gap-1.5 transition-colors"><span class="material-icons text-sm">filter_alt_off</span> Limpiar</button>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Métricas Claves -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-2xl border shadow-lg flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <span class="material-icons text-3xl">assignment</span>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Evaluaciones</p>
+            <h3 id="consultas-metric-total" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
+            <span class="text-xs text-green-600 font-bold">Registros activos</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border shadow-lg flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
+            <span class="material-icons text-3xl">grade</span>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Promedio Calificación</p>
+            <h3 id="consultas-metric-promedio" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
+            <span class="text-xs text-gray-500 font-medium">Escala de 1 a 5</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border shadow-lg flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
+            <span class="material-icons text-3xl">verified_user</span>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Registros Habeas Data</p>
+            <h3 id="consultas-metric-habeas" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
+            <span class="text-xs text-blue-600 font-bold">Actualizaciones registradas</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos y Tablas de Líneas de Tiempo / Valores -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col relative">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-700 flex items-center gap-2">
+              <span class="material-icons text-red-600 text-sm">pie_chart</span>
+              Distribución de Calificaciones
+            </h3>
+          </div>
+          <div class="h-64 relative flex justify-center items-center w-full">
+            <div id="consultas-chart-dist-loader" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+              <div class="ui-spinner"></div>
+            </div>
+            <canvas id="consultasChartDist"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col relative">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-700 flex items-center gap-2">
+              <span class="material-icons text-blue-600 text-sm">show_chart</span>
+              Línea de Tiempo de Evaluaciones
+            </h3>
+          </div>
+          <div class="h-64 relative flex justify-center items-center w-full">
+            <div id="consultas-chart-time-loader" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+              <div class="ui-spinner"></div>
+            </div>
+            <canvas id="consultasChartTimeline"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla 1: Consulta Reporte de Mis Evaluaciones -->
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mb-8">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <h3 class="font-black text-gray-800 text-lg uppercase flex items-center gap-2">
+            <span class="material-icons text-red-600">table_view</span> Consulta: Evaluaciones de Desempeño
+          </h3>
+          <div class="flex gap-3 flex-wrap items-end">
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="cons-eval-start" class="border p-2 rounded-lg text-sm outline-none"></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="cons-eval-end" class="border p-2 rounded-lg text-sm outline-none"></div>
+            <div class="w-[160px]">
+              <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+              <select id="cons-eval-regional" class="border p-2 rounded-lg text-sm w-full outline-none bg-white">
+                <option value="TODOS">Todas</option>
+              </select>
+            </div>
+            <div class="w-[160px]">
+              <label class="text-[10px] font-bold text-gray-400 uppercase">Empresa</label>
+              <select id="cons-eval-empresa" class="border p-2 rounded-lg text-sm w-full outline-none bg-white">
+                <option value="TODOS">Todas</option>
+              </select>
+            </div>
+            <button onclick="consultarTablaEvaluacionesRH()" class="btn-navy btn-fx px-5 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+            <button onclick="limpiarFiltrosConsultasEval()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 transition-colors"><span class="material-icons text-sm">filter_alt_off</span> Limpiar</button>
+            <button onclick="exportarTablaEvaluacionesRH()" class="btn-fx bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">download</span> Excel</button>
+          </div>
+        </div>
+
+        <div class="table-scroll table-scroll-sm border rounded-xl">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase">
+              <tr>
+                <th class="p-3">Fecha</th>
+                <th class="p-3">Evaluado</th>
+                <th class="p-3">Cédula</th>
+                <th class="p-3">Empresa</th>
+                <th class="p-3">Regional</th>
+                <th class="p-3">Evaluador</th>
+                <th class="p-3 text-center">Calificación</th>
+                <th class="p-3 text-center">Reporte</th>
+              </tr>
+            </thead>
+            <tbody id="cons-eval-tbody" class="divide-y">
+              <tr><td colspan="8" class="p-4 text-center text-gray-400 italic text-xs">Presione "Consultar" para cargar los datos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tabla 2: Consulta Reporte Habeas Data -->
+      <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <h3 class="font-black text-gray-800 text-lg uppercase flex items-center gap-2">
+            <span class="material-icons text-blue-600">verified_user</span> Consulta: Reporte Habeas Data
+          </h3>
+          <div class="flex gap-3 flex-wrap items-end">
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="cons-habeas-start" class="border p-2 rounded-lg text-sm outline-none"></div>
+            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="cons-habeas-end" class="border p-2 rounded-lg text-sm outline-none"></div>
+            <div class="w-[180px]">
+              <label class="text-[10px] font-bold text-gray-400 uppercase">Cédula del Colaborador</label>
+              <input type="text" id="cons-habeas-cedula" placeholder="Opcional" class="border p-2 rounded-lg text-sm w-full outline-none">
+            </div>
+            <button onclick="consultarTablaHabeasRH()" class="btn-red btn-fx px-5 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">search</span> Consultar</button>
+            <button onclick="limpiarFiltrosConsultasHabeas()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2 transition-colors"><span class="material-icons text-sm">filter_alt_off</span> Limpiar</button>
+            <button onclick="exportarTablaHabeasRH()" class="btn-fx bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase h-10 flex items-center gap-2"><span class="material-icons text-sm">download</span> Excel</button>
+          </div>
+        </div>
+
+        <div class="table-scroll table-scroll-sm border rounded-xl overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead id="cons-habeas-thead" class="bg-gray-50 text-gray-500 font-bold uppercase">
+              <tr><th class="p-3">Marca temporal</th><th class="p-3">Cédula</th><th class="p-3">Nombre</th><th class="p-3">Teléfono</th><th class="p-3">Correo</th></tr>
+            </thead>
+            <tbody id="cons-habeas-tbody" class="divide-y">
+              <tr><td colspan="5" class="p-4 text-center text-gray-400 italic text-xs">Presione "Consultar" para cargar los datos de Habeas Data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section id="sec-mis-evaluaciones" class="hidden">
       <div class="flex items-center gap-3 mb-6">
         <h2 class="page-title text-2xl font-black uppercase m-0">Mis Evaluaciones</h2>
       </div>
 
-      <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
-        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
-
-        <div class="min-w-[180px]">
-          <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
-          <select id="report-regional" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
-            <option value="TODOS">Todas las Regionales</option>
-          </select>
+      <!-- REPORTE DE EVALUACIONES -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-icons text-red-600 text-2xl">assignment</span>
+          <h3 class="page-title text-xl font-black uppercase m-0">Reporte de Evaluaciones</h3>
         </div>
 
-        <button onclick="prepararDescarga()" class="btn-navy btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
-           <span class="material-icons text-sm">settings</span> Preparar Descarga
-        </button>
+        <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="report-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="report-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+
+          <div class="min-w-[180px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Regional</label>
+            <select id="report-regional" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
+              <option value="TODOS">Todas las Regionales</option>
+            </select>
+          </div>
+
+          <div class="min-w-[180px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Empresa</label>
+            <select id="report-empresa" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 bg-white transition-colors">
+              <option value="TODOS">Todas las Empresas</option>
+            </select>
+          </div>
+
+          <button onclick="prepararDescarga()" class="btn-navy btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
+             <span class="material-icons text-sm">settings</span> Preparar Descarga
+          </button>
+          <button onclick="limpiarFiltrosMisEvaluaciones()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-sm flex items-center gap-2 transition-colors">
+             <span class="material-icons text-sm">filter_alt_off</span> Limpiar
+          </button>
+        </div>
+
+        <div id="download-ready-container" class="hidden mb-8">
+           <div class="bg-white p-10 rounded-3xl border-2 border-dashed border-green-200 flex flex-col items-center text-center shadow-sm">
+              <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
+                 <span class="material-icons text-4xl">check_circle</span>
+              </div>
+              <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">¡Informe Preparado!</h3>
+              <p class="text-gray-500 text-sm mb-6 max-w-xs">Los datos han sido procesados y están listos para ser descargados en formato Excel.</p>
+
+              <button onclick="descargarExcel()" class="btn-fx group bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-xl hover:shadow-green-200/50 transition-all flex items-center gap-3">
+                <span class="material-icons text-xl group-hover:scale-110 transition-transform">download</span>
+                Descargar Informe Final
+              </button>
+
+              <div id="download-count-badge" class="mt-4 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                 0 REGISTROS ENCONTRADOS
+              </div>
+           </div>
+        </div>
       </div>
 
-      <div id="download-ready-container" class="hidden">
-         <div class="bg-white p-10 rounded-3xl border-2 border-dashed border-green-200 flex flex-col items-center text-center shadow-sm">
-            <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
-               <span class="material-icons text-4xl">check_circle</span>
-            </div>
-            <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">¡Informe Preparado!</h3>
-            <p class="text-gray-500 text-sm mb-6 max-w-xs">Los datos han sido procesados y están listos para ser descargados en formato Excel.</p>
+      <!-- TAREA 1: SECCIÓN REPORTE HABEAS DATA -->
+      <div class="mt-10 pt-6 border-t border-gray-200">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="material-icons text-red-600 text-2xl">verified_user</span>
+          <h3 class="page-title text-xl font-black uppercase m-0">Reporte Habeas Data</h3>
+        </div>
 
-            <button onclick="descargarExcel()" class="btn-fx group bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-xl hover:shadow-green-200/50 transition-all flex items-center gap-3">
-              <span class="material-icons text-xl group-hover:scale-110 transition-transform">download</span>
-              Descargar Informe Final
-            </button>
+        <div class="bg-white p-6 rounded-2xl border mb-6 flex gap-4 flex-wrap items-end shadow-lg border-gray-100">
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Desde</label><input type="date" id="habeas-start" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
+          <div><label class="text-[10px] font-bold text-gray-400 uppercase">Hasta</label><input type="date" id="habeas-end" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors"></div>
 
-            <div id="download-count-badge" class="mt-4 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-               0 REGISTROS ENCONTRADOS
-            </div>
-         </div>
+          <div class="min-w-[200px]">
+            <label class="text-[10px] font-bold text-gray-400 uppercase">Cédula del Colaborador</label>
+            <input type="text" id="habeas-cedula" placeholder="Ingrese Cédula (Opcional)" class="border p-2.5 rounded-xl text-sm w-full outline-none focus:border-red-500 transition-colors">
+          </div>
+
+          <button onclick="prepararDescargaHabeasData()" class="btn-red btn-fx px-8 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-md flex items-center gap-2">
+             <span class="material-icons text-sm">file_download</span> Descargar Reporte
+          </button>
+          <button onclick="limpiarFiltrosHabeasData()" class="btn-fx bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold uppercase h-11 shadow-sm flex items-center gap-2 transition-colors">
+             <span class="material-icons text-sm">filter_alt_off</span> Limpiar
+          </button>
+        </div>
+
+        <div id="habeas-ready-container" class="hidden">
+           <div class="bg-white p-8 rounded-3xl border-2 border-dashed border-blue-200 flex flex-col items-center text-center shadow-sm">
+              <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+                 <span class="material-icons text-3xl">task</span>
+              </div>
+              <h4 class="text-lg font-black text-gray-800 uppercase tracking-tight">¡Reporte Habeas Data Preparado!</h4>
+              <p class="text-gray-500 text-xs mb-4 max-w-xs">Información del formulario de actualización de datos lista para su descarga.</p>
+
+              <button onclick="descargarExcelHabeasData()" class="btn-fx group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:shadow-blue-200/50 transition-all flex items-center gap-2">
+                <span class="material-icons text-lg group-hover:scale-110 transition-transform">file_download</span>
+                Exportar Excel Habeas Data
+              </button>
+
+              <div id="habeas-count-badge" class="mt-3 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                 0 REGISTROS ENCONTRADOS
+              </div>
+           </div>
+        </div>
       </div>
     </section>
 
     <section id="sec-usuarios" class="hidden">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="page-title text-2xl font-black uppercase">Gestión Usuarios</h2>
-        <button onclick="modalUsuario('CREATE')" class="btn-red btn-fx px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2">
-          <span class="material-icons text-sm">add</span> Nuevo
-        </button>
+      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h2 class="page-title text-2xl font-black uppercase m-0">Gestión Usuarios</h2>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-72">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+            <input type="text" id="user-search-input" oninput="filterUsersTable()" placeholder="Buscar por nombre, correo o rol..." class="w-full border p-2.5 pl-9 rounded-xl text-xs outline-none focus:border-red-500 transition-colors bg-white">
+          </div>
+          <button onclick="modalUsuario('CREATE')" class="btn-red btn-fx px-4 py-2.5 rounded-xl text-xs font-bold uppercase flex items-center gap-2 shrink-0 shadow-md">
+            <span class="material-icons text-sm">add</span> Nuevo
+          </button>
+        </div>
       </div>
       <div class="table-scroll bg-white rounded-xl border shadow-sm">
         <table class="w-full text-left text-sm">
@@ -971,7 +1243,7 @@
           <div>
             <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Rol</label>
             <select id="u-rol" class="bg-white w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-red-500">
-              <option>Administrador</option><option>Evaluador</option><option>UsuarioAdministrador</option><option>Usuario</option>
+              <option>Administrador</option><option>Evaluador</option><option>UsuarioAdministrador</option><option>Recursos humanos</option><option>Usuario</option>
             </select>
           </div>
           <div>
@@ -998,22 +1270,32 @@
     let currentEmployee = null;
     let usersList = [];
     let reportData = [];
+    let habeasReportData = null;
     let myChart = null;
+    let consultasChartDist = null;
+    let consultasChartTimeline = null;
+    let consultasEvalData = [];
+    let consultasHabeasData = null;
     let updateFormLoads = 0; 
 
     function aplicarPermisos(role) {
-      const userRole = role ? role.trim() : 'Usuario';
+      const userRole = role ? role.toString().trim() : 'Usuario';
+      const roleClean = userRole.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
       const permissions = {
-        'Administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
-        'Evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
-        'UsuarioAdministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
-        'Usuario': ['m-mis-evaluaciones']
+        'administrador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-consultas', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'evaluador': ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones'],
+        'usuarioadministrador': ['m-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'],
+        'recursos humanos': ['m-consultas'],
+        'usuario': ['m-mis-evaluaciones']
       };
-      const myPermissions = permissions[userRole] || ['m-mis-evaluaciones']; 
-      const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
+
+      const myPermissions = permissions[roleClean] || ['m-mis-evaluaciones'];
+      const allItems = ['m-inicio', 'm-evaluar', 'm-mis-evaluaciones', 'm-consultas', 'm-usuarios', 'm-formulario', 'm-form-update', 'm-plantilla', 'admin-menu'];
       allItems.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
       myPermissions.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
       if (myPermissions.includes('m-inicio')) nav('inicio');
+      else if (myPermissions.includes('m-consultas')) nav('consultas');
       else if (myPermissions.includes('m-usuarios')) nav('usuarios');
       else nav('mis-evaluaciones');
     }
@@ -1047,16 +1329,30 @@
         .withSuccessHandler(data => {
           if (data.error) return;
 
-          // Poblar filtros de Mis Evaluaciones (Regional)
+          // Poblar filtros de Mis Evaluaciones y Consultas (Regional y Empresa)
           if (data.regionales && data.regionales.length > 0) {
             const selectReportReg = document.getElementById('report-regional');
             const selectDashReg = document.getElementById('dash-regional');
+            const selectConsReg = document.getElementById('cons-eval-regional');
 
             data.regionales.forEach(reg => {
               const opt = document.createElement('option');
               opt.value = reg; opt.innerText = reg;
               if (selectReportReg) selectReportReg.appendChild(opt.cloneNode(true));
-              if (selectDashReg) selectDashReg.appendChild(opt);
+              if (selectDashReg) selectDashReg.appendChild(opt.cloneNode(true));
+              if (selectConsReg) selectConsReg.appendChild(opt);
+            });
+          }
+
+          if (data.empresas && data.empresas.length > 0) {
+            const selectReportEmp = document.getElementById('report-empresa');
+            const selectConsEmp = document.getElementById('cons-eval-empresa');
+
+            data.empresas.forEach(emp => {
+              const opt = document.createElement('option');
+              opt.value = emp; opt.innerText = emp;
+              if (selectReportEmp) selectReportEmp.appendChild(opt.cloneNode(true));
+              if (selectConsEmp) selectConsEmp.appendChild(opt);
             });
           }
 
@@ -1154,6 +1450,18 @@
           const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
           document.getElementById('report-start').value = firstDay;
           document.getElementById('report-end').value = lastDay;
+          if (document.getElementById('habeas-start')) document.getElementById('habeas-start').value = firstDay;
+          if (document.getElementById('habeas-end')) document.getElementById('habeas-end').value = lastDay;
+      }
+      if(id === 'consultas') {
+          const date = new Date();
+          const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+          if (document.getElementById('cons-eval-start')) document.getElementById('cons-eval-start').value = firstDay;
+          if (document.getElementById('cons-eval-end')) document.getElementById('cons-eval-end').value = lastDay;
+          if (document.getElementById('cons-habeas-start')) document.getElementById('cons-habeas-start').value = firstDay;
+          if (document.getElementById('cons-habeas-end')) document.getElementById('cons-habeas-end').value = lastDay;
+          initConsultasView();
       }
     }
 
@@ -1267,6 +1575,7 @@
       const i = document.getElementById('report-start').value;
       const f = document.getElementById('report-end').value;
       const regFiltro = document.getElementById('report-regional').value;
+      const empFiltro = document.getElementById('report-empresa') ? document.getElementById('report-empresa').value : 'TODOS';
       
       if(!i || !f || typeof google === 'undefined') return;
 
@@ -1290,7 +1599,427 @@
          document.getElementById('download-count-badge').innerText = `${rows.length} REGISTROS ENCONTRADOS`;
          document.getElementById('download-ready-container').classList.remove('hidden');
 
-      }).getReportData(i, f, regFiltro);
+      }).getReportData(i, f, regFiltro, empFiltro);
+    }
+
+    function prepararDescargaHabeasData() {
+      const i = document.getElementById('habeas-start').value;
+      const f = document.getElementById('habeas-end').value;
+      const ced = document.getElementById('habeas-cedula').value;
+
+      if(typeof google === 'undefined') return;
+
+      document.getElementById('habeas-ready-container').classList.add('hidden');
+
+      Swal.fire({
+        title: 'Procesando Reporte Habeas Data',
+        html: 'Extrayendo información del formulario de Habeas Data...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
+      google.script.run.withSuccessHandler(res => {
+        Swal.close();
+        if(!res || !res.rows || res.rows.length === 0) {
+          return Swal.fire('Sin Datos', 'No se encontraron registros de Habeas Data para el filtro seleccionado.', 'info');
+        }
+        habeasReportData = res;
+        document.getElementById('habeas-count-badge').innerText = `${res.rows.length} REGISTROS ENCONTRADOS`;
+        document.getElementById('habeas-ready-container').classList.remove('hidden');
+      }).getHabeasDataReport(i, f, ced);
+    }
+
+    function descargarExcelHabeasData() {
+      if(!habeasReportData || !habeasReportData.rows || habeasReportData.rows.length === 0) {
+        return Swal.fire('Info', 'No hay datos de Habeas Data para exportar', 'info');
+      }
+      try {
+        const headers = habeasReportData.headers;
+        const rows = habeasReportData.rows;
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Habeas_Data");
+        XLSX.writeFile(wb, "Reporte_Habeas_Data_G4S.xlsx");
+      } catch (e) {
+        Swal.fire('Error', 'No se pudo generar el archivo Excel de Habeas Data.', 'error');
+      }
+    }
+
+    function limpiarFiltrosMisEvaluaciones() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('report-start')) document.getElementById('report-start').value = firstDay;
+      if (document.getElementById('report-end')) document.getElementById('report-end').value = lastDay;
+      if (document.getElementById('report-regional')) document.getElementById('report-regional').value = 'TODOS';
+      if (document.getElementById('report-empresa')) document.getElementById('report-empresa').value = 'TODOS';
+      if (document.getElementById('download-ready-container')) document.getElementById('download-ready-container').classList.add('hidden');
+      reportData = [];
+    }
+
+    function limpiarFiltrosHabeasData() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('habeas-start')) document.getElementById('habeas-start').value = firstDay;
+      if (document.getElementById('habeas-end')) document.getElementById('habeas-end').value = lastDay;
+      if (document.getElementById('habeas-cedula')) document.getElementById('habeas-cedula').value = '';
+      if (document.getElementById('habeas-ready-container')) document.getElementById('habeas-ready-container').classList.add('hidden');
+      habeasReportData = null;
+    }
+
+    /* =====================================================================
+       FUNCIONES MÓDULO DE CONSULTAS (RECURSOS HUMANOS) - TAREA 2
+       ===================================================================== */
+    function initConsultasView() {
+      const loadingSkeleton = '<span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span>';
+      if (document.getElementById('consultas-metric-total')) document.getElementById('consultas-metric-total').innerHTML = loadingSkeleton;
+      if (document.getElementById('consultas-metric-promedio')) document.getElementById('consultas-metric-promedio').innerHTML = loadingSkeleton;
+      if (document.getElementById('consultas-metric-habeas')) document.getElementById('consultas-metric-habeas').innerHTML = loadingSkeleton;
+
+      const loaderDist = document.getElementById('consultas-chart-dist-loader');
+      const loaderTime = document.getElementById('consultas-chart-time-loader');
+      if (loaderDist) loaderDist.classList.remove('hidden');
+      if (loaderTime) loaderTime.classList.remove('hidden');
+
+      cargarMetricasYGraficosGlobalesConsultas();
+      consultarTablaEvaluacionesRH();
+      consultarTablaHabeasRH();
+    }
+
+    function setMetricasQuickPeriod(type) {
+      const now = new Date();
+      let start = new Date();
+      let end = new Date();
+
+      if (type === 'semana') {
+        const day = now.getDay() || 7;
+        start.setDate(now.getDate() - day + 1);
+        end.setDate(start.getDate() + 6);
+      } else if (type === 'mes') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      } else if (type === 'semestre') {
+        const month = now.getMonth();
+        const startMonth = month < 6 ? 0 : 6;
+        start = new Date(now.getFullYear(), startMonth, 1);
+        end = new Date(now.getFullYear(), startMonth + 6, 0);
+      } else if (type === 'anio') {
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+      } else if (type === 'todo') {
+        if (document.getElementById('metricas-start')) document.getElementById('metricas-start').value = '';
+        if (document.getElementById('metricas-end')) document.getElementById('metricas-end').value = '';
+        filtrarMetricasYGraficosConsultas();
+        return;
+      }
+
+      if (document.getElementById('metricas-start')) document.getElementById('metricas-start').value = start.toISOString().split('T')[0];
+      if (document.getElementById('metricas-end')) document.getElementById('metricas-end').value = end.toISOString().split('T')[0];
+      filtrarMetricasYGraficosConsultas();
+    }
+
+    function cargarMetricasYGraficosGlobalesConsultas() {
+      filtrarMetricasYGraficosConsultas();
+    }
+
+    function filtrarMetricasYGraficosConsultas() {
+      const iniEl = document.getElementById('metricas-start');
+      const finEl = document.getElementById('metricas-end');
+      const calEl = document.getElementById('metricas-calificacion');
+
+      const ini = iniEl ? iniEl.value : '';
+      const fin = finEl ? finEl.value : '';
+      const calFiltro = calEl ? calEl.value : 'TODOS';
+
+      const loadingSkeleton = '<span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span>';
+      if (document.getElementById('consultas-metric-total')) document.getElementById('consultas-metric-total').innerHTML = loadingSkeleton;
+      if (document.getElementById('consultas-metric-promedio')) document.getElementById('consultas-metric-promedio').innerHTML = loadingSkeleton;
+
+      const loaderDist = document.getElementById('consultas-chart-dist-loader');
+      const loaderTime = document.getElementById('consultas-chart-time-loader');
+      if (loaderDist) loaderDist.classList.remove('hidden');
+      if (loaderTime) loaderTime.classList.remove('hidden');
+
+      if (typeof google === 'undefined') return;
+
+      google.script.run.withSuccessHandler(allRows => {
+        let rows = allRows || [];
+
+        if (calFiltro !== 'TODOS') {
+          const targetScore = parseInt(calFiltro, 10);
+          rows = rows.filter(r => parseScore(r.resultado) === targetScore);
+        }
+
+        let sumaTotal = 0;
+        let countValidos = 0;
+
+        rows.forEach(r => {
+          const score = parseScore(r.resultado);
+          if (score > 0) {
+            sumaTotal += score;
+            countValidos++;
+          }
+        });
+
+        if (document.getElementById('consultas-metric-total')) {
+          document.getElementById('consultas-metric-total').innerText = rows.length;
+        }
+        if (document.getElementById('consultas-metric-promedio')) {
+          const prom = countValidos > 0 ? (sumaTotal / countValidos).toFixed(1) : '0.0';
+          document.getElementById('consultas-metric-promedio').innerText = prom;
+        }
+
+        renderConsultasCharts(rows);
+      }).getReportData(ini, fin, 'TODOS', 'TODOS');
+
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.rows && document.getElementById('consultas-metric-habeas')) {
+          document.getElementById('consultas-metric-habeas').innerText = res.rows.length;
+        } else if (document.getElementById('consultas-metric-habeas')) {
+          document.getElementById('consultas-metric-habeas').innerText = '0';
+        }
+      }).getHabeasDataReport(ini, fin, '');
+    }
+
+    function limpiarFiltrosMetricasConsultas() {
+      if (document.getElementById('metricas-start')) document.getElementById('metricas-start').value = '';
+      if (document.getElementById('metricas-end')) document.getElementById('metricas-end').value = '';
+      if (document.getElementById('metricas-calificacion')) document.getElementById('metricas-calificacion').value = 'TODOS';
+      filtrarMetricasYGraficosConsultas();
+    }
+
+    function consultarTablaEvaluacionesRH() {
+      const iniEl = document.getElementById('cons-eval-start');
+      const finEl = document.getElementById('cons-eval-end');
+      const regEl = document.getElementById('cons-eval-regional');
+      const empEl = document.getElementById('cons-eval-empresa');
+
+      const ini = iniEl ? iniEl.value : '';
+      const fin = finEl ? finEl.value : '';
+      const reg = regEl ? regEl.value : 'TODOS';
+      const emp = empEl ? empEl.value : 'TODOS';
+
+      if (typeof google === 'undefined') return;
+
+      const tbody = document.getElementById('cons-eval-tbody');
+      tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-xs text-gray-500 animate-pulse">Cargando evaluaciones...</td></tr>`;
+
+      google.script.run.withSuccessHandler(rows => {
+        consultasEvalData = rows || [];
+        if (!rows || rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-xs text-gray-400">Sin datos para los filtros seleccionados.</td></tr>`;
+          return;
+        }
+
+        let html = rows.map(r => `
+          <tr class="hover:bg-gray-50 border-b transition">
+            <td class="p-3 text-xs text-gray-600">${r.fecha}</td>
+            <td class="p-3 font-bold text-gray-800 text-xs">${r.nombre}</td>
+            <td class="p-3 text-xs text-gray-600">${r.cedula}</td>
+            <td class="p-3 text-xs text-gray-600">${r.empresa}</td>
+            <td class="p-3 text-xs text-gray-600">${r.regional}</td>
+            <td class="p-3 text-xs text-gray-600">${r.evaluador}</td>
+            <td class="p-3 text-center font-black text-xs text-gray-800">${r.resultado}</td>
+            <td class="p-3 text-center">
+              <button onclick="verPdfExistente('${r.embedLink}')" class="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded text-[10px] font-bold uppercase transition">Ver PDF</button>
+            </td>
+          </tr>
+        `).join('');
+
+        tbody.innerHTML = html;
+      }).getReportData(ini, fin, reg, emp);
+    }
+
+    function limpiarFiltrosConsultasEval() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('cons-eval-start')) document.getElementById('cons-eval-start').value = firstDay;
+      if (document.getElementById('cons-eval-end')) document.getElementById('cons-eval-end').value = lastDay;
+      if (document.getElementById('cons-eval-regional')) document.getElementById('cons-eval-regional').value = 'TODOS';
+      if (document.getElementById('cons-eval-empresa')) document.getElementById('cons-eval-empresa').value = 'TODOS';
+      consultarTablaEvaluacionesRH();
+    }
+
+    function limpiarFiltrosConsultasHabeas() {
+      const date = new Date();
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (document.getElementById('cons-habeas-start')) document.getElementById('cons-habeas-start').value = firstDay;
+      if (document.getElementById('cons-habeas-end')) document.getElementById('cons-habeas-end').value = lastDay;
+      if (document.getElementById('cons-habeas-cedula')) document.getElementById('cons-habeas-cedula').value = '';
+      consultarTablaHabeasRH();
+    }
+
+    function exportarTablaEvaluacionesRH() {
+      if(!consultasEvalData || consultasEvalData.length === 0) return Swal.fire('Info', 'No hay datos para exportar', 'info');
+      try {
+        const wsData = consultasEvalData.map(r => ({
+          'FECHA': r.fecha,
+          'EVALUADO': r.nombre,
+          'CÉDULA': r.cedula,
+          'EMPRESA': r.empresa,
+          'REGIONAL': r.regional,
+          'EVALUADOR': r.evaluador,
+          'CALIFICACIÓN': r.resultado,
+          'LINK PDF': r.link
+        }));
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Evaluaciones_RH");
+        XLSX.writeFile(wb, "Consultas_Evaluaciones_G4S.xlsx");
+      } catch (e) { Swal.fire('Error', 'No se pudo generar el Excel.', 'error'); }
+    }
+
+    function consultarTablaHabeasRH() {
+      const ini = document.getElementById('cons-habeas-start').value;
+      const fin = document.getElementById('cons-habeas-end').value;
+      const ced = document.getElementById('cons-habeas-cedula').value;
+
+      if (typeof google === 'undefined') return;
+
+      const tbody = document.getElementById('cons-habeas-tbody');
+      tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500 animate-pulse">Cargando reporte Habeas Data...</td></tr>`;
+
+      google.script.run.withSuccessHandler(res => {
+        consultasHabeasData = res;
+        if (!res || !res.rows || res.rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-gray-400">Sin registros de Habeas Data para los filtros seleccionados.</td></tr>`;
+          document.getElementById('consultas-metric-habeas').innerText = '0';
+          return;
+        }
+
+        document.getElementById('consultas-metric-habeas').innerText = res.rows.length;
+
+        // Render headers (max 6 most relevant columns for fast display)
+        const headers = res.headers;
+        const thead = document.getElementById('cons-habeas-thead');
+        thead.innerHTML = `<tr>${headers.slice(0, 7).map(h => `<th class="p-3">${h}</th>`).join('')}</tr>`;
+
+        // Render rows
+        const html = res.rows.map(r => `
+          <tr class="hover:bg-gray-50 border-b transition">
+            ${r.slice(0, 7).map((val, idx) => `<td class="p-3 text-xs ${idx === 1 || idx === 2 ? 'font-bold text-gray-800' : 'text-gray-600'}">${val}</td>`).join('')}
+          </tr>
+        `).join('');
+
+        tbody.innerHTML = html;
+      }).getHabeasDataReport(ini, fin, ced);
+    }
+
+    function exportarTablaHabeasRH() {
+      if(!consultasHabeasData || !consultasHabeasData.rows || consultasHabeasData.rows.length === 0) {
+        return Swal.fire('Info', 'No hay datos de Habeas Data para exportar', 'info');
+      }
+      try {
+        const headers = consultasHabeasData.headers;
+        const rows = consultasHabeasData.rows;
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Habeas_Data_RH");
+        XLSX.writeFile(wb, "Consultas_HabeasData_G4S.xlsx");
+      } catch (e) { Swal.fire('Error', 'No se pudo generar el Excel de Habeas Data.', 'error'); }
+    }
+
+    function parseScore(val) {
+      if (val === null || val === undefined) return 0;
+      const strVal = val.toString().trim().toUpperCase();
+      if (!strVal) return 0;
+
+      const firstToken = strVal.split(/[\s\-]+/)[0];
+      const num = parseFloat(firstToken);
+      if (!isNaN(num) && num >= 1 && num <= 5) return num;
+
+      const numDirect = parseFloat(strVal);
+      if (!isNaN(numDirect) && numDirect >= 1 && numDirect <= 5) return numDirect;
+
+      if (strVal.includes('EXCELENTE')) return 5;
+      if (strVal.includes('MUY BUENO')) return 4;
+      if (strVal.includes('BUENO')) return 3;
+      if (strVal.includes('REGULAR')) return 2;
+      if (strVal.includes('DEFICIENTE')) return 1;
+
+      return 0;
+    }
+
+    function renderConsultasCharts(rows) {
+      if (!window.Chart) return;
+
+      // Hide chart loaders
+      const loaderDist = document.getElementById('consultas-chart-dist-loader');
+      const loaderTime = document.getElementById('consultas-chart-time-loader');
+      if (loaderDist) loaderDist.classList.add('hidden');
+      if (loaderTime) loaderTime.classList.add('hidden');
+
+      // 1. Chart Distribución
+      let stats = { c5:0, c4:0, c3:0, c2:0, c1:0 };
+      let timelineMap = {};
+
+      rows.forEach(r => {
+        const score = parseScore(r.resultado);
+        if (score === 5) stats.c5++;
+        else if (score === 4) stats.c4++;
+        else if (score === 3) stats.c3++;
+        else if (score === 2) stats.c2++;
+        else if (score === 1) stats.c1++;
+
+        if (r.fecha && r.fecha !== '-') {
+          timelineMap[r.fecha] = (timelineMap[r.fecha] || 0) + 1;
+        }
+      });
+
+      const canvasDist = document.getElementById('consultasChartDist');
+      if (canvasDist) {
+        const ctxDist = canvasDist.getContext('2d');
+        if (consultasChartDist) consultasChartDist.destroy();
+        consultasChartDist = new Chart(ctxDist, {
+          type: 'doughnut',
+          data: {
+            labels: ['5 - Excelente', '4 - Muy Bueno', '3 - Bueno', '2 - Regular', '1 - Deficiente'],
+            datasets: [{
+              data: [stats.c5, stats.c4, stats.c3, stats.c2, stats.c1],
+              backgroundColor: ['#15803d', '#4ade80', '#3b82f6', '#f59e0b', '#ef4444'],
+              borderWidth: 0
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } } } }
+        });
+      }
+
+      // 2. Chart Línea de Tiempo
+      const canvasTimeline = document.getElementById('consultasChartTimeline');
+      if (canvasTimeline) {
+        const sortedDates = Object.keys(timelineMap).sort((a,b) => {
+          const partsA = a.split('/'); const partsB = b.split('/');
+          if (partsA.length === 3 && partsB.length === 3) {
+            return new Date(partsA[2], partsA[1]-1, partsA[0]) - new Date(partsB[2], partsB[1]-1, partsB[0]);
+          }
+          return a.localeCompare(b);
+        });
+        const timelineValues = sortedDates.map(d => timelineMap[d]);
+
+        const ctxTimeline = canvasTimeline.getContext('2d');
+        if (consultasChartTimeline) consultasChartTimeline.destroy();
+        consultasChartTimeline = new Chart(ctxTimeline, {
+          type: 'line',
+          data: {
+            labels: sortedDates.length > 0 ? sortedDates : ['Sin datos'],
+            datasets: [{
+              label: 'Cantidad de Evaluaciones',
+              data: timelineValues.length > 0 ? timelineValues : [0],
+              borderColor: '#10253F',
+              backgroundColor: 'rgba(16, 37, 63, 0.1)',
+              fill: true,
+              tension: 0.3,
+              pointBackgroundColor: '#E4002B'
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+      }
     }
 
     function togglePdf(index, url) {
@@ -1322,19 +2051,41 @@
 
     function loadUsers() {
       if(typeof google === 'undefined') return;
-      document.getElementById('users-body').innerHTML = `<tr><td colspan="5" class="p-4 text-center">Cargando...</td></tr>`;
+      document.getElementById('users-body').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500 animate-pulse">Cargando usuarios...</td></tr>`;
       google.script.run.withSuccessHandler(users => {
-         usersList = users;
-         const html = users.map(u => `
-            <tr class="border-b hover:bg-gray-50 transition">
-              <td class="p-4 font-bold text-gray-700">${u.nombre}</td>
-              <td class="p-4 text-xs text-gray-500">${u.correo}</td>
-              <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
-              <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td>
-              <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 text-red-600"><span class="material-icons text-sm">delete</span></button></div></td>
-            </tr>`).join('');
-         document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="text-center p-8 text-gray-400">Sin usuarios</td></tr>';
+         usersList = users || [];
+         if (document.getElementById('user-search-input')) document.getElementById('user-search-input').value = '';
+         renderUsersTable(usersList);
       }).getUsersData();
+    }
+
+    function renderUsersTable(users) {
+       const html = users.map(u => `
+          <tr class="border-b hover:bg-gray-50 transition">
+            <td class="p-4 font-bold text-gray-700">${u.nombre}</td>
+            <td class="p-4 text-xs text-gray-500">${u.correo}</td>
+            <td class="p-4 text-xs font-semibold text-slate-600">${u.rol}</td>
+            <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${u.estado === 'Activo' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${u.estado}</span></td>
+            <td class="p-4"><div class="flex gap-1"><button onclick="editUser(${u.row})" class="p-2 text-blue-600"><span class="material-icons text-sm">edit</span></button><button onclick="deleteUser(${u.row})" class="p-2 text-red-600"><span class="material-icons text-sm">delete</span></button></div></td>
+          </tr>`).join('');
+       document.getElementById('users-body').innerHTML = html || '<tr><td colspan="5" class="text-center p-8 text-gray-400 italic text-xs">Sin usuarios encontrados</td></tr>';
+    }
+
+    function filterUsersTable() {
+      const qEl = document.getElementById('user-search-input');
+      const query = qEl ? qEl.value.toString().trim().toLowerCase() : '';
+      if (!query) {
+        renderUsersTable(usersList);
+        return;
+      }
+      const filtered = usersList.filter(u => {
+        const nom = (u.nombre || '').toLowerCase();
+        const cor = (u.correo || '').toLowerCase();
+        const rol = (u.rol || '').toLowerCase();
+        const est = (u.estado || '').toLowerCase();
+        return nom.includes(query) || cor.includes(query) || rol.includes(query) || est.includes(query);
+      });
+      renderUsersTable(filtered);
     }
 
     function modalUsuario(action, row = null) {
