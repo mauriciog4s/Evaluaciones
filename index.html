@@ -767,7 +767,7 @@
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Evaluaciones</p>
-            <h3 id="consultas-metric-total" class="text-2xl font-black text-gray-800">0</h3>
+            <h3 id="consultas-metric-total" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
             <span class="text-xs text-green-600 font-bold">Registros activos</span>
           </div>
         </div>
@@ -778,7 +778,7 @@
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Promedio Calificación</p>
-            <h3 id="consultas-metric-promedio" class="text-2xl font-black text-gray-800">0.0</h3>
+            <h3 id="consultas-metric-promedio" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
             <span class="text-xs text-gray-500 font-medium">Escala de 1 a 5</span>
           </div>
         </div>
@@ -789,7 +789,7 @@
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Registros Habeas Data</p>
-            <h3 id="consultas-metric-habeas" class="text-2xl font-black text-gray-800">0</h3>
+            <h3 id="consultas-metric-habeas" class="text-2xl font-black text-gray-800"><span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span></h3>
             <span class="text-xs text-blue-600 font-bold">Actualizaciones registradas</span>
           </div>
         </div>
@@ -797,26 +797,32 @@
 
       <!-- Gráficos y Tablas de Líneas de Tiempo / Valores -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col relative">
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-gray-700 flex items-center gap-2">
               <span class="material-icons text-red-600 text-sm">pie_chart</span>
               Distribución de Calificaciones
             </h3>
           </div>
-          <div class="h-64 relative flex justify-center w-full">
+          <div class="h-64 relative flex justify-center items-center w-full">
+            <div id="consultas-chart-dist-loader" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+              <div class="ui-spinner"></div>
+            </div>
             <canvas id="consultasChartDist"></canvas>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex flex-col relative">
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-gray-700 flex items-center gap-2">
               <span class="material-icons text-blue-600 text-sm">show_chart</span>
               Línea de Tiempo de Evaluaciones
             </h3>
           </div>
-          <div class="h-64 relative flex justify-center w-full">
+          <div class="h-64 relative flex justify-center items-center w-full">
+            <div id="consultas-chart-time-loader" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+              <div class="ui-spinner"></div>
+            </div>
             <canvas id="consultasChartTimeline"></canvas>
           </div>
         </div>
@@ -1617,6 +1623,16 @@
        FUNCIONES MÓDULO DE CONSULTAS (RECURSOS HUMANOS) - TAREA 2
        ===================================================================== */
     function initConsultasView() {
+      const loadingSkeleton = '<span class="inline-block w-12 h-6 bg-gray-200 animate-pulse rounded"></span>';
+      if (document.getElementById('consultas-metric-total')) document.getElementById('consultas-metric-total').innerHTML = loadingSkeleton;
+      if (document.getElementById('consultas-metric-promedio')) document.getElementById('consultas-metric-promedio').innerHTML = loadingSkeleton;
+      if (document.getElementById('consultas-metric-habeas')) document.getElementById('consultas-metric-habeas').innerHTML = loadingSkeleton;
+
+      const loaderDist = document.getElementById('consultas-chart-dist-loader');
+      const loaderTime = document.getElementById('consultas-chart-time-loader');
+      if (loaderDist) loaderDist.classList.remove('hidden');
+      if (loaderTime) loaderTime.classList.remove('hidden');
+
       cargarMetricasYGraficosGlobalesConsultas();
       consultarTablaEvaluacionesRH();
       consultarTablaHabeasRH();
@@ -1632,9 +1648,9 @@
         let countValidos = 0;
 
         rows.forEach(r => {
-          const valNum = parseFloat(r.resultado);
-          if (!isNaN(valNum)) {
-            sumaTotal += valNum;
+          const score = parseScore(r.resultado);
+          if (score > 0) {
+            sumaTotal += score;
             countValidos++;
           }
         });
@@ -1653,6 +1669,8 @@
       google.script.run.withSuccessHandler(res => {
         if (res && res.rows && document.getElementById('consultas-metric-habeas')) {
           document.getElementById('consultas-metric-habeas').innerText = res.rows.length;
+        } else if (document.getElementById('consultas-metric-habeas')) {
+          document.getElementById('consultas-metric-habeas').innerText = '0';
         }
       }).getHabeasDataReport('', '', '');
     }
@@ -1791,20 +1809,47 @@
       } catch (e) { Swal.fire('Error', 'No se pudo generar el Excel de Habeas Data.', 'error'); }
     }
 
+    function parseScore(val) {
+      if (val === null || val === undefined) return 0;
+      const strVal = val.toString().trim().toUpperCase();
+      if (!strVal) return 0;
+
+      const firstToken = strVal.split(/[\s\-]+/)[0];
+      const num = parseFloat(firstToken);
+      if (!isNaN(num) && num >= 1 && num <= 5) return num;
+
+      const numDirect = parseFloat(strVal);
+      if (!isNaN(numDirect) && numDirect >= 1 && numDirect <= 5) return numDirect;
+
+      if (strVal.includes('EXCELENTE')) return 5;
+      if (strVal.includes('MUY BUENO')) return 4;
+      if (strVal.includes('BUENO')) return 3;
+      if (strVal.includes('REGULAR')) return 2;
+      if (strVal.includes('DEFICIENTE')) return 1;
+
+      return 0;
+    }
+
     function renderConsultasCharts(rows) {
       if (!window.Chart) return;
+
+      // Hide chart loaders
+      const loaderDist = document.getElementById('consultas-chart-dist-loader');
+      const loaderTime = document.getElementById('consultas-chart-time-loader');
+      if (loaderDist) loaderDist.classList.add('hidden');
+      if (loaderTime) loaderTime.classList.add('hidden');
 
       // 1. Chart Distribución
       let stats = { c5:0, c4:0, c3:0, c2:0, c1:0 };
       let timelineMap = {};
 
       rows.forEach(r => {
-        const score = mapScore(r.resultado);
-        if (score == 5) stats.c5++;
-        else if (score == 4) stats.c4++;
-        else if (score == 3) stats.c3++;
-        else if (score == 2) stats.c2++;
-        else if (score == 1) stats.c1++;
+        const score = parseScore(r.resultado);
+        if (score === 5) stats.c5++;
+        else if (score === 4) stats.c4++;
+        else if (score === 3) stats.c3++;
+        else if (score === 2) stats.c2++;
+        else if (score === 1) stats.c1++;
 
         if (r.fecha && r.fecha !== '-') {
           timelineMap[r.fecha] = (timelineMap[r.fecha] || 0) + 1;
