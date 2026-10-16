@@ -1321,7 +1321,7 @@
           .withSuccessHandler(data => {
              const loader = document.getElementById('system-loader');
              if(data.error) {
-               loader.innerHTML = `<div class="text-center p-8"><h3 class="text-xl font-bold text-slate-800 mb-2">Acceso Restringido</h3><p class="text-sm text-slate-500">${data.message}</p></div>`;
+               loader.innerHTML = `<div class="text-center p-8 max-w-md bg-white rounded-2xl p-6 shadow-xl border"><h3 class="text-xl font-black text-red-600 mb-2 uppercase">Acceso Restringido</h3><p class="text-xs text-gray-600 mb-4">${data.message}</p><p class="text-[11px] text-gray-400">Si está usando múltiples cuentas de Google en este navegador, abra una ventana de incógnito o inicie sesión únicamente con su cuenta corporativa.</p></div>`;
                return; 
              }
              appData = data;
@@ -1334,6 +1334,10 @@
 
              // CARGA LAZY DE DATOS PESADOS
              cargarDatosLazy();
+          })
+          .withFailureHandler(err => {
+             const loader = document.getElementById('system-loader');
+             loader.innerHTML = `<div class="text-center p-8 max-w-md bg-white rounded-2xl p-6 shadow-xl border"><h3 class="text-xl font-black text-red-600 mb-2 uppercase">Error de Acceso</h3><p class="text-xs text-gray-600 mb-4">No se pudo establecer conexión con el servidor de Google Apps Script (${err ? err.message : 'userCodeAppPanel'}).</p><p class="text-[11px] text-gray-500 bg-gray-50 p-3 rounded-lg border text-left font-mono"><strong>Sugerencia:</strong> Si tiene varias cuentas de Google abiertas, use una ventana de incógnito o asegúrese de acceder a la URL oficial que termina en <code>/exec</code>.</p></div>`;
           })
           .getInitData();
       }
