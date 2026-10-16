@@ -56,6 +56,24 @@ Ejecute manualmente la función instalarDisparador() dentro del editor de Apps S
 Gestión de Usuarios:
 Vaya a la sección Administración > Usuarios.
 Agregue correos de Google válidos y asigne el rol correspondiente. Solo los usuarios "Activos" pueden entrar.
+
+4. 🛠️ Solución de Errores Comunes de Despliegue en Apps Script
+
+### Error: "No se puede acceder a https://n-...-script.googleusercontent.com/userCodeAppPanel"
+
+Este error ocurre en Google Apps Script cuando se intenta acceder a una versión nueva o no actualizada mediante una URL de prueba/desarrollo (`/dev`) o una versión antigua de despliegue cuyo token de subdominio expiró.
+
+#### Pasos para corregir el Despliegue:
+1. Abra el editor de **Google Apps Script**.
+2. En la esquina superior derecha, haga clic en **Desplegar (Deploy)** > **Gestionar Despliegues (Manage deployments)**.
+3. En la lista de despliegues, seleccione el despliegue activo de tipo **Aplicación Web** y haga clic en el icono de **Editar (Lápiz)**.
+4. En el campo **Versión (Version)**, seleccione **Nueva versión (New version)**.
+5. Verifique la configuración de ejecución y acceso:
+   - **Ejecutar como (Execute as):** `Usuario que accede a la aplicación web` (o `Yo` según los requerimientos de la organización).
+   - **Quién tiene acceso (Who has access):** `Cualquier persona con una cuenta de Google` o `Cualquiera dentro de la organización`.
+6. Presione **Desplegar (Deploy)**.
+7. **IMPORTANTE:** Copie la URL final de la aplicación web. Esta debe terminar en `/exec` (Ejemplo: `https://script.google.com/macros/s/.../exec`). **NO** utilice las URLs que terminan en `/dev` ni enlaces de vista previa temporales.
+8. En caso de restricciones del navegador con los modales de formularios incrustados (`iframe`), utilice el botón **"Abrir en Pestaña"** disponible en la parte superior derecha de cada modal para completar la solicitud en una pestaña nueva sin bloqueos de cookies de terceros o seguridad de Google.
 B. Para el Evaluador (Proceso Estándar)
 Iniciar Evaluación:
 Vaya a "Evaluar Talento".

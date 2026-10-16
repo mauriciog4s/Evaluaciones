@@ -1177,7 +1177,13 @@
             <div>
               <h3 class="font-black text-white uppercase tracking-widest text-lg flex items-center gap-2"><span class="material-icons text-red-500">verified_user</span> Actualización de Datos</h3>
             </div>
-            <button onclick="closeUpdateModal()" class="text-white/60 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button>
+            <div class="flex items-center gap-2">
+              <a id="btn-open-external-update" href="#" target="_blank" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1 transition-all" title="Abrir en pestaña nueva si el formulario no carga en el portal">
+                <span class="material-icons text-sm">open_in_new</span>
+                <span class="hidden sm:inline">Abrir en Pestaña</span>
+              </a>
+              <button onclick="closeUpdateModal()" class="text-white/60 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button>
+            </div>
         </div>
         <div class="flex flex-col lg:flex-row flex-grow overflow-hidden">
             <div class="w-full lg:w-1/3 bg-gray-50 p-6 overflow-y-auto border-r border-gray-200">
@@ -1204,7 +1210,16 @@
 
   <div id="modal-form-embed" class="fixed inset-0 glass-overlay modal-overlay hidden items-center justify-center z-[3000] p-4">
     <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl border overflow-hidden relative">
-        <div class="bg-white p-4 border-b flex justify-between items-center z-20"><h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3><button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button></div>
+        <div class="bg-white p-4 border-b flex justify-between items-center z-20">
+          <h3 class="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2"><span class="material-icons text-red-600">assignment</span> Evaluación</h3>
+          <div class="flex items-center gap-2">
+            <a id="btn-open-external-eval" href="#" target="_blank" class="text-gray-600 hover:text-red-600 bg-gray-100 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1 transition-all" title="Abrir en pestaña nueva si el formulario no carga en el portal">
+              <span class="material-icons text-sm">open_in_new</span>
+              <span class="hidden sm:inline">Abrir en Pestaña</span>
+            </a>
+            <button onclick="closeFormModal()" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 p-2 rounded-full transition-all hover:rotate-90"><span class="material-icons">close</span></button>
+          </div>
+        </div>
         <div class="flex-grow overflow-hidden relative bg-gray-50"><div id="form-loader" class="absolute inset-0 flex items-center justify-center z-10 bg-white"><div class="ui-spinner"></div></div><iframe id="gform-frame" src="" class="w-full h-full border-0" onload="document.getElementById('form-loader').classList.add('hidden')"></iframe></div>
     </div>
   </div>
@@ -1519,10 +1534,14 @@
       btn.classList.remove('bg-[#c1272d]', 'text-white', 'hover:bg-[#a01b20]', 'shadow-lg');
       btn.innerHTML = '<span class="material-icons text-sm">lock</span> Complete el formulario...';
 
-      let urlUpdate = appData.updateUrlBase
+      let rawUrlUpdate = appData.updateUrlBase
           .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
           .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre));
 
+      const extBtn = document.getElementById('btn-open-external-update');
+      if (extBtn) extBtn.href = rawUrlUpdate;
+
+      let urlUpdate = rawUrlUpdate;
       if(!urlUpdate.includes('embedded=true')) urlUpdate += '&embedded=true';
       document.getElementById('loader-update').classList.remove('hidden');
       document.getElementById('frame-update').src = urlUpdate;
@@ -1552,7 +1571,7 @@
       closeUpdateModal();
       if(!currentEmployee) return;
       
-      let url = appData.formUrlBase
+      let rawUrl = appData.formUrlBase
         .replace('{{NOMBRE}}', encodeURIComponent(currentEmployee.nombre))
         .replace('{{CEDULA}}', encodeURIComponent(currentEmployee.cedula))
         .replace('{{CARGO}}', encodeURIComponent(currentEmployee.cargo))
@@ -1562,6 +1581,10 @@
         .replace('{{DISPOSITIVO}}', encodeURIComponent(currentEmployee.dispositivo || ''))
         .replace('{{NOMBRE_EVALUADOR}}', encodeURIComponent(appData.userName || ''));
 
+      const extBtn = document.getElementById('btn-open-external-eval');
+      if (extBtn) extBtn.href = rawUrl;
+
+      let url = rawUrl;
       if(!url.includes('embedded=true')) url += '&embedded=true';
       document.getElementById('gform-frame').src = url;
       document.getElementById('form-loader').classList.remove('hidden'); 
